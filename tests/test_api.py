@@ -24,7 +24,7 @@ from invenio.testsuite import make_test_suite, run_test_suite
 from invenio.ext.sqlalchemy import db
 from invenio.ext.restful.utils import APITestCase
 
-from ..models import Receiver
+from invenio_webhooks.models import Receiver
 
 
 class WebHooksTestCase(APITestCase):

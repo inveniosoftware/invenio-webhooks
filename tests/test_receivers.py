@@ -25,9 +25,9 @@ from flask_registry import RegistryError
 from invenio.testsuite import InvenioTestCase, make_test_suite, run_test_suite
 
 
-from ..models import Event, Receiver, InvalidPayload, CeleryReceiver, \
+from invenio_webhooks.models import Event, Receiver, InvalidPayload, CeleryReceiver, \
     ReceiverDoesNotExists, InvalidSignature
-from ..signatures import get_hmac
+from invenio_webhooks.signatures import get_hmac
 
 from invenio.celery import celery
 
