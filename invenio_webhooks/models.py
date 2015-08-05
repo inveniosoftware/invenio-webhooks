@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2014 CERN.
+# Copyright (C) 2014, 2015 CERN.
 #
 # Invenio is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -98,8 +98,8 @@ class Receiver(object):
         """Get URL for webhook.
 
         In debug and testing mode the hook URL can be overwritten using
-        ``WEBHOOKS_DEBUG_RECEIVER_URLS`` configuration variable to allow testing
-        webhooks via services such as e.g. Ultrahook.
+        ``WEBHOOKS_DEBUG_RECEIVER_URLS`` configuration variable to allow
+        testing webhooks via services such as e.g. Ultrahook.
 
         .. code-block:: python
 
