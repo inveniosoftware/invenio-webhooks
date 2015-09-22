@@ -40,6 +40,7 @@ requirements = [
     'invenio-celery>=0.1.0',
     'invenio-ext>=0.1.0',
     'invenio-oauth2server>=0.1.0',
+    'python-dateutil>=2.4.2',
 ]
 
 test_requirements = [
