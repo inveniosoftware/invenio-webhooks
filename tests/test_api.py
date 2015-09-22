@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2014 CERN.
+# Copyright (C) 2014, 2015 CERN.
 #
 # Invenio is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -21,13 +21,15 @@ from __future__ import absolute_import
 
 
 from invenio.testsuite import make_test_suite, run_test_suite
-from invenio.ext.sqlalchemy import db
-from invenio.ext.restful.utils import APITestCase
+
+from invenio_ext.sqlalchemy import db
+from invenio_ext.restful.utils import APITestCase
 
 from invenio_webhooks.models import Receiver
 
 
 class WebHooksTestCase(APITestCase):
+
     def setUp(self):
         from invenio_accounts.models import User
         self.user = User(
@@ -127,6 +129,7 @@ class WebHooksTestCase(APITestCase):
 
 
 class WebHooksScopesTestCase(APITestCase):
+
     def setUp(self):
         from invenio_accounts.models import User
         self.user = User(
