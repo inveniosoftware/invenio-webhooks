@@ -20,19 +20,25 @@
 from __future__ import absolute_import
 
 import json
+
 from flask import url_for
+
 from flask_registry import RegistryError
-from invenio.testsuite import InvenioTestCase, make_test_suite, run_test_suite
-
-
-from invenio_webhooks.models import Event, Receiver, InvalidPayload, CeleryReceiver, \
-    ReceiverDoesNotExists, InvalidSignature
-from invenio_webhooks.signatures import get_hmac
 
 from invenio_celery import celery
 
+from invenio_testing import InvenioTestCase
+
+from invenio_webhooks.models import (
+    CeleryReceiver, Event, InvalidPayload, InvalidSignature, Receiver,
+    ReceiverDoesNotExists
+)
+
+from invenio_webhooks.signatures import get_hmac
+
 
 class ReceiverTestCase(InvenioTestCase):
+
     def setUp(self):
         self.called = 0
         self.payload = None
@@ -170,10 +176,3 @@ class ReceiverTestCase(InvenioTestCase):
                    ('X-Hub-Signature', get_hmac("somevalue"))]
         with self.app.test_request_context(headers=headers, data=payload):
             self.assertRaises(InvalidSignature, r.consume_event, 2)
-
-
-TEST_SUITE = make_test_suite(ReceiverTestCase)
-
-
-if __name__ == "__main__":
-    run_test_suite(TEST_SUITE)
