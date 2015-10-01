@@ -24,6 +24,8 @@
 notifications:
   email: false
 
+sudo: false
+
 services:
   - mysql
   - redis
@@ -43,8 +45,6 @@ python:
   - "2.7"
 
 before_install:
-  - "sudo apt-get update"
-  - "sudo apt-get install python-dev"
   - "travis_retry pip install --upgrade pip"
   - "travis_retry pip install check-manifest mock"
   - "python requirements.py --extras=$REXTRAS --level=min > .travis-lowest-requirements.txt"
