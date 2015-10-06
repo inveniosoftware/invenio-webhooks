@@ -41,7 +41,7 @@ requirements = [
     'invenio-base>=0.3.0',
     'invenio-celery>=0.1.0',
     'invenio-ext>=0.3.1',
-    'invenio-oauth2server>=0.1.0',
+    'invenio-oauth2server>=0.1.1',
     'python-dateutil>=2.4.2',
 ]
 
