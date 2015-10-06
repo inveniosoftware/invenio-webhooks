@@ -39,7 +39,7 @@ requirements = [
     'six>=1.7.2',
     'invenio-base>=0.2.1',
     'invenio-celery>=0.1.0',
-    'invenio-ext>=0.1.0',
+    'invenio-ext>=0.3.1',
     'invenio-oauth2server>=0.1.0',
     'python-dateutil>=2.4.2',
 ]
