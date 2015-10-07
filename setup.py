@@ -34,17 +34,26 @@ readme = open('README.rst').read()
 history = open('CHANGES.rst').read()
 
 requirements = [
+    'backports.lzma>=0.0.3',
+    'Flask-Registry>=0.2',
+    'Flask-RESTful>=0.2.12',
     'Flask>=0.10.1',
     'six>=1.7.2',
-    'invenio-base>=0.2.1',
-    'invenio-oauth2server>=0.1.0',
+    'invenio-base>=0.3.0',
+    'invenio-celery>=0.1.0',
+    'invenio-ext>=0.3.1',
+    'invenio-oauth2server>=0.1.1',
+    'python-dateutil>=2.4.2',
 ]
 
 test_requirements = [
-    'pytest>=2.7.0',
-    'pytest-cov>=1.8.0',
+    'pytest>=2.8.0',
+    'pytest-cov>=2.1.0',
     'pytest-pep8>=1.0.6',
-    'coverage>=3.7.1',
+    'coverage>=4.0.0',
+    'invenio-accounts>=0.2.0',
+    'invenio_records>=0.3.3',
+    'invenio-testing>=0.1.1',
 ]
 
 
@@ -76,9 +85,6 @@ class PyTest(TestCommand):
         """Run tests."""
         # import here, cause outside the eggs aren't loaded
         import pytest
-        import _pytest.config
-        pm = _pytest.config.get_plugin_manager()
-        pm.consider_setuptools_entrypoints()
         errno = pytest.main(self.pytest_args)
         sys.exit(errno)
 
