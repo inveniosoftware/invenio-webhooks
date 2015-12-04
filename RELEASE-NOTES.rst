@@ -2,14 +2,14 @@
  Invenio-Webhooks v0.1.0
 =========================
 
-Invenio-Webhooks v0.1.0 was released on August 5, 2015.
+Invenio-Webhooks v0.1.0 was released on TBD, 2015.
 
 About
 -----
 
 Invenio module for processing webhook events.
 
-*This is an experimental development preview release.*
+*This is an experimental developer preview release.*
 
 What's new
 ----------
@@ -24,7 +24,7 @@ Installation
 Documentation
 -------------
 
-   http://invenio-webhooks.readthedocs.org/en/v0.1.0
+   http://pythonhosted.org/invenio-webhooks/
 
 Happy hacking and thanks for flying Invenio-Webhooks.
 

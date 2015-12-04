@@ -19,161 +19,158 @@
 
 from __future__ import absolute_import
 
+import json
 
-from invenio.testsuite import make_test_suite, run_test_suite
-from invenio.ext.sqlalchemy import db
-from invenio.ext.restful.utils import APITestCase
+from flask import url_for
 
 from invenio_webhooks.models import Receiver
 
 
-class WebHooksTestCase(APITestCase):
-    def setUp(self):
-        from invenio_accounts.models import User
-        self.user = User(
-            email='info@invenio-software.org', nickname='tester'
+def make_request(access_token, client_func, endpoint, urlargs=None, data=None,
+                 is_json=True, code=None, headers=None,
+                 follow_redirects=False):
+    """Make a request to the API endpoint.
+
+    Ensures request looks like they arrive on CFG_SITE_SECURE_URL.
+    That header "Contet-Type: application/json" is added if the parameter
+    is_json is True
+    :param endpoint: Endpoint passed to url_for.
+    :param urlargs: Keyword args passed to url_for
+    :param data: Request body, either as a dictionary if ``is_json`` is
+        True, or as a string if ``is_json`` is False
+    :param headers: List of headers for the request
+    :param code: Assert response status code
+    :param follow_redirects: Whether to follow redirects.
+    """
+    urlargs = urlargs or {}
+    urlargs['access_token'] = access_token
+
+    if headers is None:
+        headers = [('content-type', 'application/json')] if is_json else []
+
+    if data is not None:
+        request_args = dict(
+            data=json.dumps(data) if is_json else data,
+            headers=headers,
         )
-        self.user.password = "tester"
-        db.session.add(self.user)
-        db.session.commit()
-        self.create_oauth_token(self.user.id, scopes=["webhooks:event"])
+    else:
+        request_args = {}
 
-        self.called = 0
-        self.payload = None
-        self.user_id = None
+    url = url_for(endpoint, **urlargs)
+    response = client_func(
+        url,
+        follow_redirects=follow_redirects,
+        **request_args
+    )
+    if code is not None:
+        assert code == response.status_code
+    return response
 
-    def tearDown(self):
-        self.remove_oauth_token()
-        if self.user:
-            db.session.delete(self.user)
-            db.session.commit()
 
-        self.called = None
-        self.payload = None
-        self.user_id = None
+def test_405_methods(app, tester, access_token):
+    with app.test_request_context():
+        with app.test_client() as client:
+            methods = [
+                client.get, client.put, client.delete, client.head,
+                client.options, client.patch
+            ]
 
-    def callable(self, event):
-        self.called += 1
-        self.payload = event.payload
-        self.user_id = event.user_id
+            for client_func in methods:
+                make_request(
+                    access_token,
+                    client_func,
+                    'invenio_webhooks.event_list',
+                    urlargs=dict(receiver_id='test-receiver'),
+                    code=405,
+                )
 
-    def callable_wrong_signature(self):
-        self.called += 1
 
-    def test_405_methods(self):
-        methods = [
-            self.get, self.put, self.delete, self.head, self.options,
-            self.patch
-        ]
-
-        for m in methods:
-            m(
-                'receivereventlistresource',
+def test_webhook_post_unregistered(app, tester, access_token):
+    with app.test_request_context():
+        with app.test_client() as client:
+            make_request(
+                access_token,
+                client.post,
+                'invenio_webhooks.event_list',
                 urlargs=dict(receiver_id='test-receiver'),
-                code=405,
+                code=404,
             )
 
-    def test_webhook_post(self):
-        self.post(
-            'receivereventlistresource',
-            urlargs=dict(receiver_id='test-receiver'),
-            code=404,
-            user_id=self.user.id,
-        )
 
-        r = Receiver(self.callable)
-        r_invalid = Receiver(self.callable_wrong_signature)
-
-        Receiver.register('test-receiver', r)
-        Receiver.register('test-broken-receiver', r_invalid)
-
-        payload = dict(somekey='somevalue')
-        self.post(
-            'receivereventlistresource',
-            urlargs=dict(receiver_id='test-receiver'),
-            data=payload,
-            code=202,
-            user_id=self.user.id,
-        )
-
-        assert self.called == 1
-        assert self.user_id == self.user.id
-        assert self.payload == payload
-
-        # Test invalid payload
-        import pickle
-        payload = dict(somekey='somevalue')
-        self.post(
-            'receivereventlistresource',
-            urlargs=dict(receiver_id='test-receiver'),
-            data=pickle.dumps(payload),
-            is_json=False,
-            headers=[('Content-Type', 'application/python-pickle')],
-            code=415,
-            user_id=self.user.id,
-        )
-
-        # Test invalid payload, with wrong content-type
-        import pickle
-        self.post(
-            'receivereventlistresource',
-            urlargs=dict(receiver_id='test-receiver'),
-            data=pickle.dumps(payload),
-            is_json=False,
-            headers=[('Content-Type', 'application/json')],
-            code=400,
-            user_id=self.user.id,
-        )
-
-
-class WebHooksScopesTestCase(APITestCase):
-    def setUp(self):
-        from invenio_accounts.models import User
-        self.user = User(
-            email='info@invenio-software.org', nickname='tester'
-        )
-        self.user.password = "tester"
-        db.session.add(self.user)
-        db.session.commit()
-        self.create_oauth_token(self.user.id, scopes=[""])
-
-    def tearDown(self):
-        self.remove_oauth_token()
-        if self.user:
-            db.session.delete(self.user)
-            db.session.commit()
-
-    def callable(self, event):
-        pass
-
-    def test_405_methods_no_scope(self):
-        methods = [
-            self.get, self.put, self.delete, self.head, self.options,
-            self.patch
-        ]
-
-        for m in methods:
-            m(
-                'receivereventlistresource',
+def test_webhook_post(app, tester, access_token, receiver):
+    with app.test_request_context():
+        with app.test_client() as client:
+            payload = dict(somekey='somevalue')
+            make_request(
+                access_token,
+                client.post,
+                'invenio_webhooks.event_list',
                 urlargs=dict(receiver_id='test-receiver'),
-                code=405,
+                data=payload,
+                code=202,
             )
 
-    def test_webhook_post(self):
-        r = Receiver(self.callable)
+            assert 1 == len(receiver.calls)
+            assert tester.id == receiver.calls[0].user_id
+            assert payload == receiver.calls[0].payload
+
+            # Test invalid payload
+            import pickle
+            payload = dict(somekey='somevalue')
+            make_request(
+                access_token,
+                client.post,
+                'invenio_webhooks.event_list',
+                urlargs=dict(receiver_id='test-receiver'),
+                data=pickle.dumps(payload),
+                is_json=False,
+                headers=[('Content-Type', 'application/python-pickle')],
+                code=415,
+            )
+
+            # Test invalid payload, with wrong content-type
+            make_request(
+                access_token,
+                client.post,
+                'invenio_webhooks.event_list',
+                urlargs=dict(receiver_id='test-receiver'),
+                data=pickle.dumps(payload),
+                is_json=False,
+                headers=[('Content-Type', 'application/json')],
+                code=400,
+            )
+
+
+def test_405_methods_no_scope(app, tester, access_token_no_scope):
+    with app.test_request_context():
+        with app.test_client() as client:
+            methods = [
+                client.get, client.put, client.delete, client.head,
+                client.options, client.patch
+            ]
+
+            for client_func in methods:
+                make_request(
+                    access_token_no_scope,
+                    client_func,
+                    'invenio_webhooks.event_list',
+                    urlargs=dict(receiver_id='test-receiver'),
+                    code=405,
+                )
+
+
+def test_webhook_post_no_scope(app, tester, access_token_no_scope):
+    with app.test_request_context():
+        r = Receiver(lambda event: event)
         Receiver.register('test-receiver-no-scope', r)
 
-        payload = dict(somekey='somevalue')
-        self.post(
-            'receivereventlistresource',
-            urlargs=dict(receiver_id='test-receiver-no-scope'),
-            data=payload,
-            code=403,
-            user_id=self.user.id,
-        )
-
-TEST_SUITE = make_test_suite(WebHooksTestCase, WebHooksScopesTestCase)
-
-
-if __name__ == "__main__":
-    run_test_suite(TEST_SUITE)
+        with app.test_client() as client:
+            payload = dict(somekey='somevalue')
+            make_request(
+                access_token_no_scope,
+                client.post,
+                'invenio_webhooks.event_list',
+                urlargs=dict(receiver_id='test-receiver-no-scope'),
+                data=payload,
+                code=403,
+            )

@@ -22,42 +22,42 @@
     as an Intergovernmental Organization or submit itself to any jurisdiction.
 
 
-.. include:: ../README.rst
+API Docs
+========
 
-User's Guide
-------------
+.. automodule:: invenio_webhooks.ext
+   :members:
+   :undoc-members:
 
-This part of the documentation will show you how to get started in using
-Invenio-Base.
+.. automodule:: invenio_webhooks.models
+   :members:
+   :undoc-members:
 
-.. toctree::
-   :maxdepth: 2
-
-   installation
-   usage
-
-
-API Reference
+Configuration
 -------------
 
-If you are looking for information on a specific function, class or method,
-this part of the documentation is for you.
+.. automodule:: invenio_webhooks.config
+   :members:
+   :undoc-members:
 
-.. toctree::
-   :maxdepth: 2
 
-   api
+Signatures
+----------
 
-Additional Notes
-----------------
+.. automodule:: invenio_webhooks.signatures
+   :members:
+   :undoc-members:
 
-Notes on how to contribute, legal information and changes are here for the
-interested.
+REST API
+--------
 
-.. toctree::
-   :maxdepth: 1
+.. automodule:: invenio_webhooks.views
+   :members:
+   :undoc-members:
 
-   contributing
-   changes
-   license
-   authors
+Proxies
+-------
+
+.. automodule:: invenio_webhooks.proxies
+   :members:
+   :undoc-members:

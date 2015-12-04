@@ -23,30 +23,27 @@
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
 
-# TODO: Generate this manifest file by running the following commands:
-#
-#  git init
-#  git add -A
-#  pip install -e .[all]
-#  check-manifest -u
+"""Minimal Flask application example for development.
 
-# Check manifest will not automatically add these two files:
-include .dockerignore
-include .editorconfig
-include .tx/config
-recursive-include invenio_webhooks *.po *.pot *.mo
+Run example development server:
 
-# added by check_manifest.py
-include *.rst
-include *.sh
-include *.txt
-include LICENSE
-include babel.ini
-include pytest.ini
-recursive-include docs *.bat
-recursive-include docs *.py
-recursive-include docs *.rst
-recursive-include docs Makefile
-recursive-include examples *.py
-recursive-include invenio_webhooks *.html
-recursive-include tests *.py
+.. code-block:: console
+
+   $ cd examples
+   $ python app.py
+"""
+
+from __future__ import absolute_import, print_function
+
+from flask import Flask
+from flask_babelex import Babel
+
+from invenio_webhooks import InvenioWebhooks
+
+# Create Flask application
+app = Flask(__name__)
+Babel(app)
+InvenioWebhooks(app)
+
+if __name__ == "__main__":
+    app.run()

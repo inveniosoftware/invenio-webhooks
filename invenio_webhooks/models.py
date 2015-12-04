@@ -3,49 +3,61 @@
 # This file is part of Invenio.
 # Copyright (C) 2014, 2015 CERN.
 #
-# Invenio is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
+# Invenio is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
 # published by the Free Software Foundation; either version 2 of the
 # License, or (at your option) any later version.
 #
-# Invenio is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
+# Invenio is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+# along with Invenio; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#
+# In applying this license, CERN does not
+# waive the privileges and immunities granted to it by virtue of its status
+# as an Intergovernmental Organization or submit itself to any jurisdiction.
+
+"""Models for webhook receivers."""
 
 from __future__ import absolute_import
 
 import re
 
-from flask import request, url_for, current_app
+from flask import current_app, request, url_for
 
 from . import signatures
-from .registry import receivers_registry
+from .proxies import current_webhooks
 
 
 #
 # Errors
 #
 class WebhookError(Exception):
-
     """General webhook error."""
 
     pass
 
 
-class ReceiverDoesNotExists(WebhookError):
+class ReceiverDoesNotExist(WebhookError):
+    """Raised when receiver does not exist."""
+
     pass
 
 
 class InvalidPayload(WebhookError):
+    """Raised when the payload is invalid."""
+
     pass
 
 
 class InvalidSignature(WebhookError):
+    """Raised when the signature does not match."""
+
     pass
 
 
@@ -53,7 +65,6 @@ class InvalidSignature(WebhookError):
 # Models
 #
 class Receiver(object):
-
     """Base class for a webhook receiver.
 
     A receiver is responsible for receiving and extracting a payload from a
@@ -62,19 +73,22 @@ class Receiver(object):
     """
 
     def __init__(self, fn, signature=''):
+        """Initialize a receiver with a callable and a signature."""
         self._callable = fn
         self.signature = signature
 
     @classmethod
     def get(cls, receiver_id):
+        """Return registered receiver."""
         try:
-            return receivers_registry[receiver_id]
+            return current_webhooks.receivers[receiver_id]
         except KeyError:
-            raise ReceiverDoesNotExists(receiver_id)
+            raise ReceiverDoesNotExist(receiver_id)
 
     @classmethod
     def all(cls):
-        return receivers_registry
+        """Return all registered receivers."""
+        return current_webhooks.receivers
 
     @classmethod
     def register(cls, receiver_id, receiver):
@@ -83,7 +97,7 @@ class Receiver(object):
         :param receiver_id: Receiver ID used in the URL.
         :param receiver: ``Receiver`` instance.
         """
-        receivers_registry[receiver_id] = receiver
+        current_webhooks.register(receiver_id, receiver)
 
     @classmethod
     def unregister(cls, receiver_id):
@@ -91,7 +105,7 @@ class Receiver(object):
 
         :param receiver_id: Receiver ID used when registering.
         """
-        del receivers_registry[receiver_id]
+        current_webhooks.unregister(receiver_id)
 
     @classmethod
     def get_hook_url(cls, receiver_id, access_token):
@@ -116,7 +130,7 @@ class Receiver(object):
             if url_pattern:
                 return url_pattern % dict(token=access_token)
         return url_for(
-            'receivereventlistresource',
+            'invenio_webhooks.event_list',
             receiver_id=receiver_id,
             access_token=access_token,
             _external=True
@@ -161,7 +175,6 @@ class Receiver(object):
 
 
 class CeleryReceiver(Receiver):
-
     """Asynchronous receiver.
 
     Receiver which will fire a celery task to handle payload instead of running
@@ -169,6 +182,7 @@ class CeleryReceiver(Receiver):
     """
 
     def __init__(self, task_callable, signature='', **options):
+        """Initialize a celery receiver."""
         super(CeleryReceiver, self).__init__(task_callable, signature)
         self._task = task_callable
         self._options = options
@@ -182,22 +196,24 @@ class CeleryReceiver(Receiver):
 
 
 class Event(object):
-
     """Incoming webhook event data.
 
     Represents webhook event data which consists of a payload and a user id.
     """
 
     def __init__(self, user_id=None, payload=None):
+        """Initialize an event with user identifier and payload."""
         self.user_id = user_id
         self.payload = payload
 
     def __getstate__(self):
+        """Pickle current state."""
         return dict(
             user_id=self.user_id,
             payload=self.payload,
         )
 
     def __setstate__(self, state):
+        """Unpickle state."""
         self.user_id = state['user_id']
         self.payload = state['payload']

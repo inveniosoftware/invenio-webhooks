@@ -19,12 +19,14 @@
 
 """Webhooks module."""
 
-from __future__ import unicode_literals
+WEBHOOKS_URL_PREFIX = '/hooks'
+"""URL prefix for Webhooks blueprint."""
 
 WEBHOOKS_DEBUG_RECEIVER_URLS = {}
-"""Mapping of receiver id to URL pattern. This allows generating URLs to an
-intermediate webhook proxy service like Ultrahook for testing on development
-machines:
+"""Mapping of receiver id to URL pattern.
+
+This allows generating URLs to an intermediate webhook proxy service like
+Ultrahook for testing on development machines:
 
 .. code-block:: python
 
@@ -33,4 +35,4 @@ machines:
     }
 """
 
-WEBHOOKS_SECRET_KEY = "secret_key"
+WEBHOOKS_SECRET_KEY = 'secret_key'
