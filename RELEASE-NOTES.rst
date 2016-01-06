@@ -1,8 +1,8 @@
-=========================
- Invenio-Webhooks v0.1.0
-=========================
+===========================
+ Invenio-Webhooks v1.0.0a1
+===========================
 
-Invenio-Webhooks v0.1.0 was released on TBD, 2015.
+Invenio-Webhooks v1.0.0a1 was released on January 6, 2016.
 
 About
 -----
@@ -14,12 +14,12 @@ Invenio module for processing webhook events.
 What's new
 ----------
 
-- Initial public release.
+- Port to new structure for Invenio 3.
 
 Installation
 ------------
 
-   $ pip install invenio-webhooks==0.1.0
+   $ pip install invenio-webhooks==1.0.0a1
 
 Documentation
 -------------

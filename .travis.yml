@@ -60,3 +60,15 @@ script:
 
 after_success:
   - coveralls
+
+deploy:
+  provider: pypi
+  user: jirikuncar
+  password:
+    secure: A3jqGAqzNQPxRF4Bx3WzDv1HoLtvvuKqMLJ7nIgn7T2a5T1kTVTtqc/POaVcoBVQtPqjLSqURUg9IBzmuX8llKuogN9d7OC2UShTeXEqjmxyLoKxGMbWfW/zNTez6NCPqF4S8h2gH2+bB1rCxW5gEGZT+PYA01cyHS49Dgsv9Z1OFcUds65YiyUqWIdzNz4535u5b3AN/t5hIwB/vx2uOQtt6DtfXw11g8JktVTchYaZhN26cYLRiMbna4aRshKRrU4UIBgb8HlAVjNghkS0ItCzrbRPI70hblykwxw6nn+Z+jjJXLwAYVXGAHRjUZlHNhEYBsheSnCOnq/2YjiUO5F2/RcaNZZAtb4FuAq+bqaatxrhmH75W2f4mNuJuMlUbGJG+IEHUT1jDWGjXv3YlfUBHHQX/c1F76kaWpHCwSRDy5e1PBS90YTxGV/DvsBnBfb2f9EEggdqsSaBZk2Bq6OXcu21MXCXewTToT1pywqP35rFKZB3I0FwfnWPjFbErr586rJSy90gg44naWntJLKaofOT5bTp8TG+oHM69LjGwzziafK9K6qx8B+6/j05z5L5i6xLRFCQszeo4xC6y5rhlHQHv8xCB+GK1QOhj+DezUMbA8QafI9E4pEqYkiqW9yj6bP51nBoaTGTe/hEBUaoADl9fdpdCw9ie3WcE8g=
+  distributions: "compile_catalog sdist bdist_wheel"
+  on:
+    tags: true
+    repo: inveniosoftware/invenio-webhooks
+    python: "2.7"
+    conditions: $REQUIREMENTS = release
