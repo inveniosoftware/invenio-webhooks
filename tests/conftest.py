@@ -48,7 +48,7 @@ from invenio_webhooks import InvenioWebhooks
 from invenio_webhooks.models import Receiver
 
 
-@pytest.fixture()
+@pytest.fixture
 def app(request):
     """Flask application fixture."""
     app = Flask('testapp')
@@ -95,40 +95,45 @@ def app(request):
 
 
 @pytest.fixture
-def tester(app):
+def tester_id(app):
     """Fixture that contains the test data for models tests."""
     with app.app_context():
         datastore = app.extensions['security'].datastore
-        with db.session.begin_nested():
-            tester = datastore.create_user(
-                email='info@invenio-software.org', password='tester',
-            )
-    return tester
+        tester = datastore.create_user(
+            email='info@invenio-software.org', password='tester',
+        )
+        db.session.commit()
+        tester_id = tester.id
+    return tester_id
 
 
 @pytest.fixture
-def access_token(app, tester):
+def access_token(app, tester_id):
     with app.app_context():
-        return Token.create_personal(
-            'test-personal-{0}'.format(tester.id),
-            tester.id,
+        token = Token.create_personal(
+            'test-personal-{0}'.format(tester_id),
+            tester_id,
             scopes=['webhooks:event'],
             is_internal=True,
         ).access_token
+        db.session.commit()
+        return token
 
 
 @pytest.fixture
-def access_token_no_scope(app, tester):
+def access_token_no_scope(app, tester_id):
     with app.app_context():
-        return Token.create_personal(
-            'test-personal-{0}'.format(tester.id),
-            tester.id,
+        token = Token.create_personal(
+            'test-personal-{0}'.format(tester_id),
+            tester_id,
             scopes=[''],
             is_internal=True,
         ).access_token
+        db.session.commit()
+        return token
 
 
-@pytest.fixture()
+@pytest.fixture
 def receiver(app):
     """Register test receiver."""
     calls = []

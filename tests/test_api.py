@@ -62,12 +62,13 @@ def make_request(access_token, client_func, endpoint, urlargs=None, data=None,
         follow_redirects=follow_redirects,
         **request_args
     )
+
     if code is not None:
         assert code == response.status_code
     return response
 
 
-def test_405_methods(app, tester, access_token):
+def test_405_methods(app, tester_id, access_token):
     with app.test_request_context():
         with app.test_client() as client:
             methods = [
@@ -85,7 +86,7 @@ def test_405_methods(app, tester, access_token):
                 )
 
 
-def test_webhook_post_unregistered(app, tester, access_token):
+def test_webhook_post_unregistered(app, tester_id, access_token):
     with app.test_request_context():
         with app.test_client() as client:
             make_request(
@@ -97,7 +98,7 @@ def test_webhook_post_unregistered(app, tester, access_token):
             )
 
 
-def test_webhook_post(app, tester, access_token, receiver):
+def test_webhook_post(app, tester_id, access_token, receiver):
     with app.test_request_context():
         with app.test_client() as client:
             payload = dict(somekey='somevalue')
@@ -111,7 +112,7 @@ def test_webhook_post(app, tester, access_token, receiver):
             )
 
             assert 1 == len(receiver.calls)
-            assert tester.id == receiver.calls[0].user_id
+            assert tester_id == receiver.calls[0].user_id
             assert payload == receiver.calls[0].payload
 
             # Test invalid payload
@@ -141,7 +142,7 @@ def test_webhook_post(app, tester, access_token, receiver):
             )
 
 
-def test_405_methods_no_scope(app, tester, access_token_no_scope):
+def test_405_methods_no_scope(app, tester_id, access_token_no_scope):
     with app.test_request_context():
         with app.test_client() as client:
             methods = [
@@ -159,7 +160,7 @@ def test_405_methods_no_scope(app, tester, access_token_no_scope):
                 )
 
 
-def test_webhook_post_no_scope(app, tester, access_token_no_scope):
+def test_webhook_post_no_scope(app, tester_id, access_token_no_scope):
     with app.test_request_context():
         r = Receiver(lambda event: event)
         Receiver.register('test-receiver-no-scope', r)
