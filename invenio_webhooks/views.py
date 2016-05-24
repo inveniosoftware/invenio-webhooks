@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2014, 2015 CERN.
+# Copyright (C) 2014, 2015, 2016 CERN.
 #
 # Invenio is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
@@ -32,10 +32,11 @@ from functools import wraps
 from flask import Blueprint, abort, jsonify, request
 from flask.views import MethodView
 from flask_babelex import lazy_gettext as _
+from invenio_db import db
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_oauth2server.models import Scope
 
-from .models import InvalidPayload, Receiver, ReceiverDoesNotExist, \
+from .models import Event, InvalidPayload, Receiver, ReceiverDoesNotExist, \
     WebhookError
 
 blueprint = Blueprint('invenio_webhooks', __name__)
@@ -90,9 +91,17 @@ class ReceiverEventListResource(MethodView):
     @error_handler
     def post(self, receiver_id=None):
         """Handle POST request."""
-        receiver = Receiver.get(receiver_id)
-        receiver.consume_event(request.oauth.access_token.user_id)
-        return jsonify(status=202, message='Accepted'), 202
+        event = Event.create(
+            receiver_id=receiver_id,
+            user_id=request.oauth.access_token.user_id
+        )
+        db.session.add(event)
+        db.session.commit()
+
+        # db.session.begin(subtransactions=True)
+        event.process()
+        db.session.commit()
+        return jsonify(**event.response), event.response_code
 
     def options(self, receiver_id=None):
         """Handle OPTIONS request."""

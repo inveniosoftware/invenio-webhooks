@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2014 CERN.
+# Copyright (C) 2014, 2016 CERN.
 #
 # Invenio is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -22,95 +22,89 @@ from __future__ import absolute_import
 import json
 
 import pytest
-from celery import shared_task
 from flask import url_for
+from invenio_db import db
 
 from invenio_webhooks.models import CeleryReceiver, Event, InvalidPayload, \
-    InvalidSignature, Receiver, ReceiverDoesNotExist
+    InvalidSignature, ReceiverDoesNotExist
+from invenio_webhooks.proxies import current_webhooks
 from invenio_webhooks.signatures import get_hmac
 
 
-def test_receiver_registration(app):
-    calls = []
-
-    def consumer(event):
-        calls.append(event)
-
-    @shared_task(ignore_result=True)
-    def task_callable(event_state):
-        e = Event()
-        e.__setstate__(event_state)
-        calls.append(e)
-
-    r = Receiver(consumer)
-    r_invalid = Receiver(consumer)
-
+def test_receiver_registration(app, receiver):
     with app.app_context():
-        Receiver.register('test-receiver', r)
-        Receiver.register('test-invalid', r_invalid)
+        current_webhooks.register('test-invalid', receiver)
 
-        assert 'test-receiver' in Receiver.all()
-        assert Receiver.get('test-receiver') == r
+        assert 'test-receiver' in current_webhooks.receivers
+        assert 'test-receiver' == current_webhooks.receivers[
+            'test-receiver'].receiver_id
 
         # Double registration
         with pytest.raises(AssertionError):
-            Receiver.register('test-receiver', r)
+            current_webhooks.register('test-receiver', receiver)
 
-        Receiver.unregister('test-receiver')
-        assert 'test-receiver' not in Receiver.all()
+        current_webhooks.unregister('test-receiver')
+        assert 'test-receiver' not in current_webhooks.receivers
 
-        Receiver.register('test-receiver', r)
+        current_webhooks.register('test-receiver', receiver)
 
     # JSON payload parsing
     payload = json.dumps(dict(somekey='somevalue'))
     headers = [('Content-Type', 'application/json')]
     with app.test_request_context(headers=headers, data=payload):
-        r.consume_event(2)
-        assert 1 == len(calls)
-        assert json.loads(payload) == calls[0].payload
-        assert 2 == calls[0].user_id
-
-        # NOTE legacy test with no clear reason.
-        # with pytest.raises(TypeError):
-        #     r_invalid.consume_event(2)
-        # assert 1 == len(calls)
+        event = Event.create(receiver_id='test-receiver')
+        event.process()
+        assert 1 == len(event.receiver.calls)
+        assert json.loads(payload) == event.receiver.calls[0].payload
+        assert event.receiver.calls[0].user_id is None
 
     # Form encoded values payload parsing
     payload = dict(somekey='somevalue')
     with app.test_request_context(method='POST', data=payload):
-        r.consume_event(2)
-        assert 2 == len(calls)
-        assert dict(somekey=['somevalue']) == calls[1].payload
+        event = Event.create(receiver_id='test-receiver')
+        event.process()
+        assert 2 == len(event.receiver.calls)
+        assert dict(somekey=['somevalue']) == event.receiver.calls[1].payload
 
     # Test invalid post data
     with app.test_request_context(method='POST', data="invaliddata"):
         with pytest.raises(InvalidPayload):
-            r.consume_event(2)
+            event = Event.create(receiver_id='test-receiver')
+
+    calls = []
 
     # Test Celery Receiver
-    rcelery = CeleryReceiver(task_callable)
-    with app.app_context():
-        CeleryReceiver.register('celery-receiver', rcelery)
+    class TestCeleryReceiver(CeleryReceiver):
+
+        def run(self, event):
+            calls.append(event.payload)
+
+    app.extensions['invenio-webhooks'].register('celery-receiver',
+                                                TestCeleryReceiver)
 
     # Form encoded values payload parsing
     payload = dict(somekey='somevalue')
     with app.test_request_context(method='POST', data=payload):
-        rcelery.consume_event(1)
-        assert 3 == len(calls)
-        assert dict(somekey=['somevalue']) == calls[2].payload
-        assert 1 == calls[2].user_id
+        event = Event.create(receiver_id='celery-receiver')
+        db.session.add(event)
+        db.session.commit()
+        event.process()
+        assert 1 == len(calls)
+        assert dict(somekey=['somevalue']) == calls[0]
 
 
 def test_unknown_receiver(app):
     """Raise when receiver does not exist."""
     with app.app_context():
         with pytest.raises(ReceiverDoesNotExist):
-            Receiver.get('unknown')
+            Event.create(receiver_id='unknown')
 
 
 def test_hookurl(app, receiver):
     with app.test_request_context():
-        assert Receiver.get_hook_url('test-receiver', 'token') == url_for(
+        assert current_webhooks.receivers['test-receiver'].get_hook_url(
+            'token'
+        ) == url_for(
             'invenio_webhooks.event_list',
             receiver_id='test-receiver',
             access_token='token',
@@ -123,19 +117,18 @@ def test_hookurl(app, receiver):
 
     with app.test_request_context():
         assert 'http://test.local/?access_token=token' == \
-            Receiver.get_hook_url('test-receiver', 'token')
+            current_webhooks.receivers['test-receiver'].get_hook_url(
+                'token'
+            )
 
 
-def test_signature_checking(app):
+def test_signature_checking(app, receiver):
     """Check signatures for payload."""
-    calls = []
+    class TestReceiverSign(receiver):
+        signature = 'X-Hub-Signature'
 
-    def consumer(event):
-        calls.append(event)
-
-    r = Receiver(consumer, signature='X-Hub-Signature')
     with app.app_context():
-        Receiver.register('test-receiver-sign', r)
+        current_webhooks.register('test-receiver-sign', TestReceiverSign)
 
     # check correct signature
     payload = json.dumps(dict(somekey='somevalue'))
@@ -143,16 +136,18 @@ def test_signature_checking(app):
         headers = [('Content-Type', 'application/json'),
                    ('X-Hub-Signature', get_hmac(payload))]
     with app.test_request_context(headers=headers, data=payload):
-        r.consume_event(2)
-        assert json.loads(payload) == calls[0].payload
+        event = Event.create(receiver_id='test-receiver-sign')
+        event.process()
+        assert json.loads(payload) == event.receiver.calls[0].payload
 
     # check signature with prefix
     with app.app_context():
         headers = [('Content-Type', 'application/json'),
                    ('X-Hub-Signature', 'sha1=' + get_hmac(payload))]
     with app.test_request_context(headers=headers, data=payload):
-        r.consume_event(2)
-        assert json.loads(payload) == calls[1].payload
+        event = Event.create(receiver_id='test-receiver-sign')
+        event.process()
+        assert json.loads(payload) == event.receiver.calls[1].payload
 
     # check incorrect signature
     with app.app_context():
@@ -160,4 +155,4 @@ def test_signature_checking(app):
                    ('X-Hub-Signature', get_hmac("somevalue"))]
     with app.test_request_context(headers=headers, data=payload):
         with pytest.raises(InvalidSignature):
-            r.consume_event(2)
+            Event.create(receiver_id='test-receiver-sign')

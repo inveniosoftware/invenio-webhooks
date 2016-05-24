@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2014 CERN.
+# Copyright (C) 2014, 2016 CERN.
 #
 # Invenio is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -24,6 +24,7 @@ import json
 from flask import url_for
 
 from invenio_webhooks.models import Receiver
+from invenio_webhooks.proxies import current_webhooks
 
 
 def make_request(access_token, client_func, endpoint, urlargs=None, data=None,
@@ -100,6 +101,7 @@ def test_webhook_post_unregistered(app, tester_id, access_token):
 
 def test_webhook_post(app, tester_id, access_token, receiver):
     with app.test_request_context():
+        receiver = current_webhooks.receivers['test-receiver']
         with app.test_client() as client:
             payload = dict(somekey='somevalue')
             make_request(
@@ -161,9 +163,13 @@ def test_405_methods_no_scope(app, tester_id, access_token_no_scope):
 
 
 def test_webhook_post_no_scope(app, tester_id, access_token_no_scope):
+    class TestReceiverNoScope(Receiver):
+        def __call__(self, event):
+            return event
+
     with app.test_request_context():
-        r = Receiver(lambda event: event)
-        Receiver.register('test-receiver-no-scope', r)
+        current_webhooks.register('test-receiver-no-scope',
+                                  TestReceiverNoScope)
 
         with app.test_client() as client:
             payload = dict(somekey='somevalue')

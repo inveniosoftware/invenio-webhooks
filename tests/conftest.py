@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2015 CERN.
+# Copyright (C) 2015, 2016 CERN.
 #
 # Invenio is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
@@ -46,6 +46,7 @@ from invenio_oauth2server.views import server_blueprint, settings_blueprint
 
 from invenio_webhooks import InvenioWebhooks
 from invenio_webhooks.models import Receiver
+from invenio_webhooks.views import blueprint
 
 
 @pytest.fixture
@@ -70,7 +71,8 @@ def app(request):
         SECURITY_PASSWORD_SCHEMES=['plaintext'],
     )
     FlaskCLI(app)
-    FlaskCeleryExt(app)
+    celeryext = FlaskCeleryExt(app)
+    celeryext.celery.flask_app = app  # Make sure both apps are the same!
     Babel(app)
     Mail(app)
     Menu(app)
@@ -82,6 +84,7 @@ def app(request):
     app.register_blueprint(server_blueprint)
     app.register_blueprint(settings_blueprint)
     InvenioWebhooks(app)
+    app.register_blueprint(blueprint)
 
     with app.app_context():
         db.create_all()
@@ -109,6 +112,7 @@ def tester_id(app):
 
 @pytest.fixture
 def access_token(app, tester_id):
+    """Fixture that create an access token."""
     with app.app_context():
         token = Token.create_personal(
             'test-personal-{0}'.format(tester_id),
@@ -122,6 +126,7 @@ def access_token(app, tester_id):
 
 @pytest.fixture
 def access_token_no_scope(app, tester_id):
+    """Fixture that create an access token without scope."""
     with app.app_context():
         token = Token.create_personal(
             'test-personal-{0}'.format(tester_id),
@@ -136,15 +141,14 @@ def access_token_no_scope(app, tester_id):
 @pytest.fixture
 def receiver(app):
     """Register test receiver."""
-    calls = []
+    class TestReceiver(Receiver):
 
-    def consumer(event):
-        calls.append(event)
+        def __init__(self, *args, **kwargs):
+            super(TestReceiver, self).__init__(*args, **kwargs)
+            self.calls = []
 
-    test_receiver = Receiver(consumer)
-    test_receiver.calls = calls
+        def run(self, event):
+            self.calls.append(event)
 
-    with app.app_context():
-        Receiver.register('test-receiver', test_receiver)
-
-    return test_receiver
+    app.extensions['invenio-webhooks'].register('test-receiver', TestReceiver)
+    return TestReceiver

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2014, 2015 CERN.
+# Copyright (C) 2014, 2015, 2016 CERN.
 #
 # Invenio is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -18,9 +18,6 @@
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
 """Webhooks module."""
-
-WEBHOOKS_URL_PREFIX = '/hooks'
-"""URL prefix for Webhooks blueprint."""
 
 WEBHOOKS_DEBUG_RECEIVER_URLS = {}
 """Mapping of receiver id to URL pattern.

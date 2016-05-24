@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2015 CERN.
+# Copyright (C) 2015, 2016 CERN.
 #
 # Invenio is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
@@ -25,7 +25,6 @@
 """Invenio module for processing webhook events."""
 
 import os
-import sys
 
 from setuptools import find_packages, setup
 from setuptools.command.test import test as TestCommand
@@ -66,6 +65,8 @@ setup_requires = [
 
 install_requires = [
     'Flask-BabelEx>=0.9.2',
+    'cryptography>=1.3.1',
+    'invenio-db>=1.0.0a9',
     'invenio-oauth2server>=1.0.0a1',
 ]
 
@@ -93,8 +94,14 @@ setup(
     include_package_data=True,
     platforms='any',
     entry_points={
-        'invenio_base.apps': [
+        'invenio_base.api_apps': [
             'invenio_webhooks = invenio_webhooks:InvenioWebhooks',
+        ],
+        'invenio_base.api_blueprints': [
+            'invenio_webhooks = invenio_webhooks.views:blueprint',
+        ],
+        'invenio_base.models': [
+            'invenio_webhooks = invenio_webhooks.models',
         ],
         'invenio_i18n.translations': [
             'messages = invenio_webhooks',

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2015 CERN.
+# Copyright (C) 2015, 2016 CERN.
 #
 # Invenio is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
@@ -29,7 +29,6 @@ from __future__ import absolute_import, print_function
 import pkg_resources
 
 from . import config
-from .views import blueprint
 
 
 class _WebhooksState(object):
@@ -46,7 +45,7 @@ class _WebhooksState(object):
     def register(self, receiver_id, receiver):
         """Register a receiver."""
         assert receiver_id not in self.receivers
-        self.receivers[receiver_id] = receiver
+        self.receivers[receiver_id] = receiver(receiver_id)
 
     def unregister(self, receiver_id):
         """Unregister a receiver by its id."""
@@ -55,7 +54,7 @@ class _WebhooksState(object):
     def load_entry_point_group(self, entry_point_group):
         """Load actions from an entry point group."""
         for ep in pkg_resources.iter_entry_points(group=entry_point_group):
-            self.register(ep.name, ep.load())
+            self.register(ep.name, ep.load()(ep.name))
 
 
 class InvenioWebhooks(object):
@@ -69,10 +68,6 @@ class InvenioWebhooks(object):
     def init_app(self, app, entry_point_group='invenio_webhooks.receivers'):
         """Flask application initialization."""
         self.init_config(app)
-        app.register_blueprint(
-            blueprint,
-            url_prefix=app.config['WEBHOOKS_URL_PREFIX'],
-        )
         state = _WebhooksState(app, entry_point_group=entry_point_group)
         self._state = app.extensions['invenio-webhooks'] = state
 

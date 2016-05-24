@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2014, 2015 CERN.
+# Copyright (C) 2014, 2015, 2016 CERN.
 #
 # Invenio is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
@@ -27,8 +27,16 @@
 from __future__ import absolute_import
 
 import re
+import uuid
 
+from celery import shared_task
 from flask import current_app, request, url_for
+from invenio_accounts.models import User
+from invenio_db import db
+from sqlalchemy.dialects import postgresql
+from sqlalchemy.orm import validates
+from sqlalchemy_utils.models import Timestamp
+from sqlalchemy_utils.types import JSONType, UUIDType
 
 from . import signatures
 from .proxies import current_webhooks
@@ -40,25 +48,17 @@ from .proxies import current_webhooks
 class WebhookError(Exception):
     """General webhook error."""
 
-    pass
-
 
 class ReceiverDoesNotExist(WebhookError):
     """Raised when receiver does not exist."""
-
-    pass
 
 
 class InvalidPayload(WebhookError):
     """Raised when the payload is invalid."""
 
-    pass
-
 
 class InvalidSignature(WebhookError):
     """Raised when the signature does not match."""
-
-    pass
 
 
 #
@@ -68,47 +68,26 @@ class Receiver(object):
     """Base class for a webhook receiver.
 
     A receiver is responsible for receiving and extracting a payload from a
-    request, and passing it on to a method which can handle the event
-    notification.
+    request. You must implement ``run`` method that accepts the event
+    instance.
     """
 
-    def __init__(self, fn, signature=''):
-        """Initialize a receiver with a callable and a signature."""
-        self._callable = fn
-        self.signature = signature
+    signature = ''
+    """Default signature."""
 
-    @classmethod
-    def get(cls, receiver_id):
-        """Return registered receiver."""
-        try:
-            return current_webhooks.receivers[receiver_id]
-        except KeyError:
-            raise ReceiverDoesNotExist(receiver_id)
+    def __init__(self, receiver_id):
+        """Initialize a receiver identifier."""
+        self.receiver_id = receiver_id
 
-    @classmethod
-    def all(cls):
-        """Return all registered receivers."""
-        return current_webhooks.receivers
+    def __call__(self, event):
+        """Proxy to ``self.run`` method."""
+        return self.run(event)
 
-    @classmethod
-    def register(cls, receiver_id, receiver):
-        """Register a webhook receiver.
+    def run(self, event):
+        """Implement method accepting the ``Event`` instance."""
+        raise NotImplemented()
 
-        :param receiver_id: Receiver ID used in the URL.
-        :param receiver: ``Receiver`` instance.
-        """
-        current_webhooks.register(receiver_id, receiver)
-
-    @classmethod
-    def unregister(cls, receiver_id):
-        """Unregister an already registered webhook.
-
-        :param receiver_id: Receiver ID used when registering.
-        """
-        current_webhooks.unregister(receiver_id)
-
-    @classmethod
-    def get_hook_url(cls, receiver_id, access_token):
+    def get_hook_url(self, access_token):
         """Get URL for webhook.
 
         In debug and testing mode the hook URL can be overwritten using
@@ -121,17 +100,16 @@ class Receiver(object):
                 github='http://github.userid.ultrahook.com',
             )
         """
-        cls.get(receiver_id)
         # Allow overwriting hook URL in debug mode.
         if (current_app.debug or current_app.testing) and \
            current_app.config.get('WEBHOOKS_DEBUG_RECEIVER_URLS', None):
             url_pattern = current_app.config[
-                'WEBHOOKS_DEBUG_RECEIVER_URLS'].get(receiver_id, None)
+                'WEBHOOKS_DEBUG_RECEIVER_URLS'].get(self.receiver_id, None)
             if url_pattern:
                 return url_pattern % dict(token=access_token)
         return url_for(
             'invenio_webhooks.event_list',
-            receiver_id=receiver_id,
+            receiver_id=self.receiver_id,
             access_token=access_token,
             _external=True
         )
@@ -139,18 +117,6 @@ class Receiver(object):
     #
     # Instance methods (override if needed)
     #
-    def consume_event(self, user_id):
-        """Consume a webhook event by calling the associated callable."""
-        event = self._create_event(user_id)
-        self._callable(event)
-
-    def _create_event(self, user_id):
-        """Create a new webhook event."""
-        return Event(
-            user_id,
-            payload=self.extract_payload()
-        )
-
     def check_signature(self):
         """Check signature of signed request."""
         if not self.signature:
@@ -174,6 +140,16 @@ class Receiver(object):
         raise InvalidPayload(request.content_type)
 
 
+@shared_task(ignore_results=True)
+def process_event(event_id):
+    """Process event in Celery."""
+    with db.session.begin_nested():
+        event = Event.query.get(event_id)
+        event.receiver.run(event)  # call run directly to avoild circular calls
+        db.session.add(event)
+    db.session.commit()
+
+
 class CeleryReceiver(Receiver):
     """Asynchronous receiver.
 
@@ -181,39 +157,97 @@ class CeleryReceiver(Receiver):
     it synchronously during the request.
     """
 
-    def __init__(self, task_callable, signature='', **options):
-        """Initialize a celery receiver."""
-        super(CeleryReceiver, self).__init__(task_callable, signature)
-        self._task = task_callable
-        self._options = options
-        from celery import Task
-        assert isinstance(self._task, Task)
-
-    def consume_event(self, user_id):
-        """Consume a webhook event by firing celery task."""
-        event = self._create_event(user_id)
-        self._task.apply_async(args=[event.__getstate__()], **self._options)
+    def __call__(self, event):
+        """Fire a celery task."""
+        process_event.apply_async(args=[event.id])
 
 
-class Event(object):
+def _json_column(**kwargs):
+    """Return JSON column."""
+    return db.Column(
+        JSONType().with_variant(
+            postgresql.JSON(none_as_null=True),
+            'postgresql',
+        ),
+        nullable=True,
+        **kwargs
+    )
+
+
+class Event(db.Model, Timestamp):
     """Incoming webhook event data.
 
     Represents webhook event data which consists of a payload and a user id.
     """
 
-    def __init__(self, user_id=None, payload=None):
-        """Initialize an event with user identifier and payload."""
-        self.user_id = user_id
-        self.payload = payload
+    id = db.Column(
+        UUIDType,
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    """Event identifier."""
 
-    def __getstate__(self):
-        """Pickle current state."""
-        return dict(
-            user_id=self.user_id,
-            payload=self.payload,
-        )
+    receiver_id = db.Column(db.String(255), index=True, nullable=False)
+    """Receiver identifier."""
 
-    def __setstate__(self, state):
-        """Unpickle state."""
-        self.user_id = state['user_id']
-        self.payload = state['payload']
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey(User.id),
+        nullable=True,
+    )
+    """User identifier."""
+
+    payload = _json_column()
+    """Store payload in JSON format."""
+
+    payload_headers = _json_column()
+    """Store payload headers in JSON format."""
+
+    response = _json_column(
+        default=lambda: {'status': 202, 'message': 'Accepted.'}
+    )
+    """Store response in JSON format."""
+
+    response_headers = _json_column()
+    """Store response headers in JSON format."""
+
+    response_code = db.Column(db.Integer, default=202)
+
+    @validates('receiver_id')
+    def validate_receiver(self, key, value):
+        """Validate receiver identifier."""
+        if value not in current_webhooks.receivers:
+            raise ReceiverDoesNotExist(self.receiver_id)
+        return value
+
+    @classmethod
+    def create(cls, receiver_id, user_id=None):
+        """Create an event instance."""
+        event = cls(id=uuid.uuid4(), receiver_id=receiver_id, user_id=user_id)
+        event.payload = event.receiver.extract_payload()
+        return event
+
+    @property
+    def receiver(self):
+        """Return registered receiver."""
+        try:
+            return current_webhooks.receivers[self.receiver_id]
+        except KeyError:
+            raise ReceiverDoesNotExist(self.receiver_id)
+
+    @receiver.setter
+    def receiver(self, value):
+        """Set receiver instance."""
+        assert isinstance(value, Receiver)
+        self.receiver_id = value.receiver_id
+
+    def process(self):
+        """Process current event."""
+        try:
+            self.receiver(self)
+        # TODO RESTException
+        except Exception as e:
+            current_app.logger.exception('Could not process event.')
+            self.response_code = 500
+            self.response = dict(status=500, message=str(e))
+        return self
