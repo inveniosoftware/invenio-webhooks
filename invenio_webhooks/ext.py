@@ -54,7 +54,7 @@ class _WebhooksState(object):
     def load_entry_point_group(self, entry_point_group):
         """Load actions from an entry point group."""
         for ep in pkg_resources.iter_entry_points(group=entry_point_group):
-            self.register(ep.name, ep.load()(ep.name))
+            self.register(ep.name, ep.load())
 
 
 class InvenioWebhooks(object):
