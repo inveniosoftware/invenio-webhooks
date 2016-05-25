@@ -180,6 +180,8 @@ class Event(db.Model, Timestamp):
     Represents webhook event data which consists of a payload and a user id.
     """
 
+    __tablename__ = 'webhooks_events'
+
     id = db.Column(
         UUIDType,
         primary_key=True,
