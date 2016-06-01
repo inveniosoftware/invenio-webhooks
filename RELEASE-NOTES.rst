@@ -1,8 +1,8 @@
 ===========================
- Invenio-Webhooks v1.0.0a1
+ Invenio-Webhooks v1.0.0a2
 ===========================
 
-Invenio-Webhooks v1.0.0a1 was released on January 6, 2016.
+Invenio-Webhooks v1.0.0a2 was released on June 1, 2016.
 
 About
 -----
@@ -19,7 +19,7 @@ What's new
 Installation
 ------------
 
-   $ pip install invenio-webhooks==1.0.0a1
+   $ pip install invenio-webhooks==1.0.0a2
 
 Documentation
 -------------

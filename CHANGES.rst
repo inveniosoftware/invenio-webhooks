@@ -24,7 +24,7 @@
 Changes
 =======
 
-Version 1.0.0 (release 2016-01-06)
+Version 1.0.0a2 (release 2016-06-01)
 
 - Port to new structure for Invenio 3.
 
