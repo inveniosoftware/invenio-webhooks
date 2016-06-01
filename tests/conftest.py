@@ -69,6 +69,7 @@ def app(request):
         OAUTH2_CACHE_TYPE='simple',
         SECURITY_PASSWORD_HASH='plaintext',
         SECURITY_PASSWORD_SCHEMES=['plaintext'],
+        SECURITY_DEPRECATED_PASSWORD_SCHEMES=[],
     )
     FlaskCLI(app)
     celeryext = FlaskCeleryExt(app)
