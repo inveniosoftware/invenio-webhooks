@@ -104,7 +104,7 @@ def tester_id(app):
     with app.app_context():
         datastore = app.extensions['security'].datastore
         tester = datastore.create_user(
-            email='info@invenio-software.org', password='tester',
+            email='info@inveniosoftware.org', password='tester',
         )
         db.session.commit()
         tester_id = tester.id
