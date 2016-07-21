@@ -113,6 +113,6 @@ class ReceiverEventListResource(MethodView):
 #
 view = ReceiverEventListResource.as_view('event_list')
 blueprint.add_url_rule(
-    '/receivers/<string:receiver_id>/events/',
+    '/hooks/receivers/<string:receiver_id>/events/',
     view_func=view,
 )

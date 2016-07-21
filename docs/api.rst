@@ -27,18 +27,15 @@ API Docs
 
 .. automodule:: invenio_webhooks.ext
    :members:
-   :undoc-members:
 
 .. automodule:: invenio_webhooks.models
    :members:
-   :undoc-members:
 
 Configuration
 -------------
 
 .. automodule:: invenio_webhooks.config
    :members:
-   :undoc-members:
 
 
 Signatures
@@ -46,18 +43,15 @@ Signatures
 
 .. automodule:: invenio_webhooks.signatures
    :members:
-   :undoc-members:
 
 REST API
 --------
 
 .. automodule:: invenio_webhooks.views
    :members:
-   :undoc-members:
 
 Proxies
 -------
 
 .. automodule:: invenio_webhooks.proxies
    :members:
-   :undoc-members:
