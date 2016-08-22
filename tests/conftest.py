@@ -34,7 +34,6 @@ from flask import Flask
 from flask_babelex import Babel
 from flask_breadcrumbs import Breadcrumbs
 from flask_celeryext import FlaskCeleryExt
-from flask_cli import FlaskCLI
 from flask_mail import Mail
 from flask_menu import Menu
 from invenio_accounts import InvenioAccounts
@@ -71,7 +70,6 @@ def app(request):
         SECURITY_PASSWORD_SCHEMES=['plaintext'],
         SECURITY_DEPRECATED_PASSWORD_SCHEMES=[],
     )
-    FlaskCLI(app)
     celeryext = FlaskCeleryExt(app)
     celeryext.celery.flask_app = app  # Make sure both apps are the same!
     Babel(app)
