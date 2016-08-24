@@ -26,6 +26,7 @@ Authors
 
 Invenio module for processing webhook events.
 
+- Alizee Pace <alizee.pace@gmail.com>
 - Grzegorz Szpura <grzegorz.szpura@cern.ch>
 - Jiri Kuncar <jiri.kuncar@cern.ch>
 - Konstantinos Kostis <konstantinos.kostis@cern.ch>
