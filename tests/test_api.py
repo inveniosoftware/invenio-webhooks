@@ -72,10 +72,7 @@ def make_request(access_token, client_func, endpoint, urlargs=None, data=None,
 def test_405_methods(app, tester_id, access_token):
     with app.test_request_context():
         with app.test_client() as client:
-            methods = [
-                client.get, client.put, client.delete, client.head,
-                client.options, client.patch
-            ]
+            methods = [client.put, client.options, client.patch]
 
             for client_func in methods:
                 make_request(
@@ -147,10 +144,7 @@ def test_webhook_post(app, tester_id, access_token, receiver):
 def test_405_methods_no_scope(app, tester_id, access_token_no_scope):
     with app.test_request_context():
         with app.test_client() as client:
-            methods = [
-                client.get, client.put, client.delete, client.head,
-                client.options, client.patch
-            ]
+            methods = [client.put, client.options, client.patch]
 
             for client_func in methods:
                 make_request(

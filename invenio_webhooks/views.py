@@ -26,7 +26,6 @@
 
 from __future__ import absolute_import, print_function
 
-import json
 from functools import wraps
 
 from flask import Blueprint, abort, jsonify, request
@@ -36,8 +35,8 @@ from invenio_db import db
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_oauth2server.models import Scope
 
-from .models import Event, InvalidPayload, Receiver, ReceiverDoesNotExist, \
-    WebhookError
+from .errors import ReceiverDoesNotExist, WebhooksError
+from .models import Event, InvalidPayload
 
 blueprint = Blueprint('invenio_webhooks', __name__)
 
@@ -64,18 +63,18 @@ def error_handler(f):
         except ReceiverDoesNotExist:
             return jsonify(
                 status=404,
-                description="Receiver does not exists."
+                description='Receiver does not exists.'
             ), 404
         except InvalidPayload as e:
             return jsonify(
                 status=415,
-                description="Receiver does not support the"
-                            " content-type '%s'." % e.args[0]
+                description='Receiver does not support the'
+                            ' content-type "{}".'.format(e.args[0])
             ), 415
-        except WebhookError:
+        except WebhooksError:
             return jsonify(
                 status=500,
-                description="Internal server error"
+                description='Internal server error'
             ), 500
     return inner
 
@@ -91,14 +90,33 @@ class ReceiverEventListResource(MethodView):
     @error_handler
     def post(self, receiver_id=None):
         """Handle POST request."""
+        return self.handle_event('new_task', receiver_id)
+
+    @require_api_auth()
+    @require_oauth_scopes('webhooks:event')
+    @error_handler
+    def head(self, receiver_id=None):
+        """Handle HEAD request."""
+        return self.handle_event('get_status', receiver_id)
+
+    @require_api_auth()
+    @require_oauth_scopes('webhooks:event')
+    @error_handler
+    def delete(self, receiver_id=None):
+        """Handle DELETE request."""
+        return self.handle_event('cancel_task', receiver_id)
+
+    @staticmethod
+    def handle_event(action, receiver_id=None):
+        """Handle API request."""
         event = Event.create(
             receiver_id=receiver_id,
-            user_id=request.oauth.access_token.user_id
+            user_id=request.oauth.access_token.user_id,
+            action=action
         )
         db.session.add(event)
         db.session.commit()
 
-        # db.session.begin(subtransactions=True)
         event.process()
         db.session.commit()
         return jsonify(**event.response), event.response_code
@@ -106,7 +124,6 @@ class ReceiverEventListResource(MethodView):
     def options(self, receiver_id=None):
         """Handle OPTIONS request."""
         abort(405)
-
 
 #
 # Register API resources

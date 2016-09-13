@@ -30,6 +30,7 @@ from __future__ import absolute_import, print_function
 import os
 
 import pytest
+from celery import shared_task
 from flask import Flask
 from flask_babelex import Babel
 from flask_breadcrumbs import Breadcrumbs
@@ -45,6 +46,8 @@ from invenio_oauth2server.views import server_blueprint, settings_blueprint
 
 from invenio_webhooks import InvenioWebhooks
 from invenio_webhooks.models import Receiver
+from invenio_webhooks.receivers import CeleryChainTaskReceiver, \
+    CeleryTaskReceiver
 from invenio_webhooks.views import blueprint
 
 
@@ -55,9 +58,10 @@ def app(request):
     app.config.update(
         TESTING=True,
         CELERY_ALWAYS_EAGER=True,
-        CELERY_CACHE_BACKEND="memory",
+        CELERY_CACHE_BACKEND='memory',
         CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-        CELERY_RESULT_BACKEND="cache",
+        CELERY_RESULT_BACKEND='cache',
+        BROKER_TRANSPORT='redis',
         LOGIN_DISABLED=False,
         SECRET_KEY='test_key',
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
@@ -151,3 +155,61 @@ def receiver(app):
 
     app.extensions['invenio-webhooks'].register('test-receiver', TestReceiver)
     return TestReceiver
+
+
+@pytest.fixture
+def task_receiver(app):
+    """Register test celery task receiver."""
+
+    @shared_task
+    def add(x, y):
+        TestCeleryTaskReceiver.result = x + y
+        return x + y
+
+    class TestCeleryTaskReceiver(CeleryTaskReceiver):
+        """Test receiver that executes an addition as a Celery """
+        celery_task = add
+        result = None
+
+    app.extensions['invenio-webhooks'].register('test-task-receiver',
+                                                TestCeleryTaskReceiver)
+    return TestCeleryTaskReceiver
+
+
+@pytest.fixture
+def chain_task_receiver(app):
+    """Register test celery chain task receiver."""
+
+    @shared_task
+    def init(initial_value, parent_id):
+        return initial_value
+
+    @shared_task
+    def mul1(value, multiplicand1, parent_id):
+        return value * multiplicand1
+
+    @shared_task
+    def mul2(value, multiplicand2, parent_id):
+        return value * multiplicand2
+
+    @shared_task
+    def final(values, parent_id):
+        TestCeleryChainTaskReceiver.result = values[0] + values[1]
+        return values[0] + values[1]
+
+    class TestCeleryChainTaskReceiver(CeleryChainTaskReceiver):
+        """Test receiver that executes a celery chain."""
+        result = None
+        celery_tasks = [
+            (init, {'initial_value'}),
+            [
+                (mul1, {'multiplicand1'}),
+                (mul2, {'multiplicand2'})
+            ],
+            (final, {})
+        ]
+
+    app.extensions['invenio-webhooks'].register(
+        'test-chain-task-receiver', TestCeleryChainTaskReceiver
+    )
+    return TestCeleryChainTaskReceiver
