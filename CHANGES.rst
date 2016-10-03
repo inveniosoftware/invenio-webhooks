@@ -1,6 +1,6 @@
 ..
     This file is part of Invenio.
-    Copyright (C) 2015 CERN.
+    Copyright (C) 2015, 2016 CERN.
 
     Invenio is free software; you can redistribute it
     and/or modify it under the terms of the GNU General Public License as
@@ -24,7 +24,7 @@
 Changes
 =======
 
-Version 1.0.0a3 (release 2016-08-02)
+Version 1.0.0a4 (release 2016-10-03)
 
 - Port to new structure for Invenio 3.
 

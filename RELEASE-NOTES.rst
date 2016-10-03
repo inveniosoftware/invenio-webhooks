@@ -1,8 +1,8 @@
 ===========================
- Invenio-Webhooks v1.0.0a3
+ Invenio-Webhooks v1.0.0a4
 ===========================
 
-Invenio-Webhooks v1.0.0a3 was released on August 2, 2016.
+Invenio-Webhooks v1.0.0a4 was released on October 3, 2016.
 
 About
 -----
@@ -19,18 +19,18 @@ What's new
 Installation
 ------------
 
-   $ pip install invenio-webhooks==1.0.0a3
+   $ pip install invenio-webhooks==1.0.0a4
 
 Documentation
 -------------
 
-   http://invenio-webhooks.readthedocs.io/
+   https://invenio-webhooks.readthedocs.io/
 
 Happy hacking and thanks for flying Invenio-Webhooks.
 
 | Invenio Development Team
 |   Email: info@inveniosoftware.org
 |   IRC: #invenio on irc.freenode.net
-|   Twitter: http://twitter.com/inveniosoftware
+|   Twitter: https://twitter.com/inveniosoftware
 |   GitHub: https://github.com/inveniosoftware/invenio-webhooks
 |   URL: http://inveniosoftware.org
