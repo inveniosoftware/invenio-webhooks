@@ -25,9 +25,11 @@ import pytest
 from flask import url_for
 from invenio_db import db
 
-from invenio_webhooks.models import CeleryReceiver, Event, InvalidPayload, \
-    InvalidSignature, ReceiverDoesNotExist
+from invenio_webhooks.errors import InvalidPayload, InvalidSignature, \
+    ReceiverDoesNotExist
+from invenio_webhooks.models import Event, Receiver
 from invenio_webhooks.proxies import current_webhooks
+from invenio_webhooks.receivers import CeleryReceiver
 from invenio_webhooks.signatures import get_hmac
 
 
