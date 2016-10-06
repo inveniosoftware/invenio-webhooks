@@ -156,3 +156,12 @@ def test_signature_checking(app, receiver):
     with app.test_request_context(headers=headers, data=payload):
         with pytest.raises(InvalidSignature):
             Event.create(receiver_id='test-receiver-sign')
+
+
+def test_event_deletion(app, receiver):
+    """Test event deletion."""
+    with app.test_request_context(method='POST', data={'foo': 'bar'}):
+        event = Event.create(receiver_id='test-receiver')
+        event.delete()
+        assert event.response == {'status': 410, 'message': 'Gone.'}
+        assert event.response_code == 410

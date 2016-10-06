@@ -181,3 +181,67 @@ def test_webhook_post_no_scope(app, tester_id, access_token_no_scope):
                 data=payload,
                 code=403,
             )
+
+
+def test_event_api(app, tester_id, access_token, receiver):
+    with app.test_request_context():
+        receiver = current_webhooks.receivers['test-receiver']
+        with app.test_client() as client:
+            payload = dict(somekey='somevalue')
+            response = make_request(
+                access_token,
+                client.post,
+                'invenio_webhooks.event_list',
+                urlargs=dict(receiver_id='test-receiver'),
+                data=payload,
+                code=202,
+            )
+
+            # Check if the event exists.
+            make_request(
+                access_token,
+                client.head,
+                'invenio_webhooks.event_item',
+                urlargs=dict(
+                    receiver_id=response.headers['X-Hub-Event'],
+                    event_id=response.headers['X-Hub-Delivery'],
+                ),
+                data=payload,
+                code=202,
+            )
+            make_request(
+                access_token,
+                client.get,
+                'invenio_webhooks.event_item',
+                urlargs=dict(
+                    receiver_id=response.headers['X-Hub-Event'],
+                    event_id=response.headers['X-Hub-Delivery'],
+                ),
+                data=payload,
+                code=202,
+            )
+
+            # Delete event.
+            make_request(
+                access_token,
+                client.delete,
+                'invenio_webhooks.event_item',
+                urlargs=dict(
+                    receiver_id=response.headers['X-Hub-Event'],
+                    event_id=response.headers['X-Hub-Delivery'],
+                ),
+                data=payload,
+            )
+
+            # Check that event was deleted.
+            make_request(
+                access_token,
+                client.get,
+                'invenio_webhooks.event_item',
+                urlargs=dict(
+                    receiver_id=response.headers['X-Hub-Event'],
+                    event_id=response.headers['X-Hub-Delivery'],
+                ),
+                data=payload,
+                code=410,
+            )

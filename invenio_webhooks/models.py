@@ -30,6 +30,7 @@ import re
 import uuid
 
 from celery import shared_task
+from celery.result import AsyncResult
 from flask import current_app, request, url_for
 from invenio_accounts.models import User
 from invenio_db import db
@@ -39,26 +40,8 @@ from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import JSONType, UUIDType
 
 from . import signatures
+from .errors import InvalidPayload, InvalidSignature, ReceiverDoesNotExist
 from .proxies import current_webhooks
-
-
-#
-# Errors
-#
-class WebhookError(Exception):
-    """General webhook error."""
-
-
-class ReceiverDoesNotExist(WebhookError):
-    """Raised when receiver does not exist."""
-
-
-class InvalidPayload(WebhookError):
-    """Raised when the payload is invalid."""
-
-
-class InvalidSignature(WebhookError):
-    """Raised when the signature does not match."""
 
 
 #
@@ -86,6 +69,12 @@ class Receiver(object):
     def run(self, event):
         """Implement method accepting the ``Event`` instance."""
         raise NotImplemented()
+
+    def delete(self, event):
+        """Mark event as deleted."""
+        assert self.receiver_id == event.receiver_id
+        event.response = {'status': 410, 'message': 'Gone.'}
+        event.response_code = 410
 
     def get_hook_url(self, access_token):
         """Get URL for webhook.
@@ -159,7 +148,12 @@ class CeleryReceiver(Receiver):
 
     def __call__(self, event):
         """Fire a celery task."""
-        process_event.apply_async(args=[event.id])
+        process_event.apply_async(task_id=event.id, args=[event.id])
+
+    def delete(self, event):
+        """Abort running task if it exists."""
+        super(CeleryReceiver, self).delete(event)
+        AsyncResult(event.id).revoke(terminate=True)
 
 
 def _json_column(**kwargs):
@@ -253,3 +247,7 @@ class Event(db.Model, Timestamp):
             self.response_code = 500
             self.response = dict(status=500, message=str(e))
         return self
+
+    def delete(self):
+        """Make receiver delete this event."""
+        self.receiver.delete(self)
