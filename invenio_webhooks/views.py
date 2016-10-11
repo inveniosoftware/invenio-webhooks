@@ -67,14 +67,17 @@ def add_link_header(response, links):
 
 def make_response(event):
     """Make a response from webhook event."""
+    code, message = event.status
     response = jsonify(**event.response)
     response.headers['X-Hub-Event'] = event.receiver_id
     response.headers['X-Hub-Delivery'] = event.id
+    if message:
+        response.headers['X-Hub-Info'] = message
     add_link_header(response, {'self': url_for(
         '.event_item', receiver_id=event.receiver_id, event_id=event.id,
         _external=True
     )})
-    return response, event.response_code
+    return response, code
 
 
 #

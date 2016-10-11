@@ -29,13 +29,14 @@ from __future__ import absolute_import
 import re
 import uuid
 
-from celery import shared_task
+from celery import shared_task, states
 from celery.result import AsyncResult
 from flask import current_app, request, url_for
 from invenio_accounts.models import User
 from invenio_db import db
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import validates
+from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import JSONType, UUIDType
 
@@ -69,6 +70,13 @@ class Receiver(object):
     def run(self, event):
         """Implement method accepting the ``Event`` instance."""
         raise NotImplemented()
+
+    def status(self, event):
+        """Return a tuple with current processing status code and message.
+
+        Return ``None`` if the backend does not support states.
+        """
+        pass
 
     def delete(self, event):
         """Mark event as deleted."""
@@ -129,12 +137,15 @@ class Receiver(object):
         raise InvalidPayload(request.content_type)
 
 
-@shared_task(ignore_results=True)
-def process_event(event_id):
+@shared_task(bind=True, ignore_results=True)
+def process_event(self, event_id):
     """Process event in Celery."""
     with db.session.begin_nested():
         event = Event.query.get(event_id)
-        event.receiver.run(event)  # call run directly to avoild circular calls
+        event._celery_task = self  # internal binding to a Celery task
+        event.receiver.run(event)  # call run directly to avoid circular calls
+        flag_modified(event, 'response')
+        flag_modified(event, 'response_headers')
         db.session.add(event)
     db.session.commit()
 
@@ -146,9 +157,28 @@ class CeleryReceiver(Receiver):
     it synchronously during the request.
     """
 
+    CELERY_STATES_TO_HTTP = {
+        states.PENDING: 202,
+        states.STARTED: 202,
+        states.RETRY: 202,
+        states.FAILURE: 500,
+        states.SUCCESS: 201,
+    }
+    """Mapping of Celery result states to HTTP codes."""
+
     def __call__(self, event):
         """Fire a celery task."""
-        process_event.apply_async(task_id=event.id, args=[event.id])
+        process_event.apply_async(task_id=str(event.id), args=[event.id])
+
+    def status(self, event):
+        """Return a tuple with current processing status code and message."""
+        result = AsyncResult(str(event.id))
+        return (
+            self.CELERY_STATES_TO_HTTP.get(result.state),
+            result.info.get('message')
+            if result.state == states.PENDING and result.info
+            else event.response.get('message')
+        )
 
     def delete(self, event):
         """Abort running task if it exists."""
@@ -247,6 +277,14 @@ class Event(db.Model, Timestamp):
             self.response_code = 500
             self.response = dict(status=500, message=str(e))
         return self
+
+    @property
+    def status(self):
+        """Return a tuple with current processing status code and message."""
+        status = self.receiver.status(self)
+        return status if status else (
+            self.response_code, self.response.get('message')
+        )
 
     def delete(self):
         """Make receiver delete this event."""

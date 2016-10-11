@@ -165,3 +165,44 @@ def test_event_deletion(app, receiver):
         event.delete()
         assert event.response == {'status': 410, 'message': 'Gone.'}
         assert event.response_code == 410
+
+
+def test_event_status(app):
+    """Test event status reporting."""
+    data = json.dumps({'x': 40, 'y': 2})
+
+    class TestCeleryReceiver(CeleryReceiver):
+
+        def run(self, event):
+            """Change task state."""
+            from celery import current_task, states
+
+            event.response['message'] = event.payload['x'] + event.payload['y']
+            current_task.update_state(task_id=str(event.id),
+                                      state=states.PENDING,
+                                      meta={'message': 0})
+            assert event.status == (202, 0)
+            current_task.update_state(task_id=str(event.id),
+                                      state=states.PENDING,
+                                      meta={'message': 1})
+            assert event.status == (202, 1)
+            current_task.update_state(task_id=str(event.id),
+                                      state=states.SUCCESS,
+                                      meta={'message': 2})
+
+    app.extensions['invenio-webhooks'].register('test-celery-receiver',
+                                                TestCeleryReceiver)
+
+    headers = [('Content-Type', 'application/json')]
+    with app.test_request_context(method='POST', headers=headers, data=data):
+        event = Event.create(receiver_id='test-celery-receiver')
+        db.session.add(event)
+        db.session.commit()
+        event_id = event.id
+        assert event.status == (202, 'Accepted.')
+        event.process()
+
+    with app.app_context():
+        event = Event.query.get(event_id)
+        assert event.status == (201, 42)
+        assert event.response['message'] == 42

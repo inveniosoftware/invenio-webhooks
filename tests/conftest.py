@@ -53,22 +53,24 @@ def app(request):
     """Flask application fixture."""
     app = Flask('testapp')
     app.config.update(
-        TESTING=True,
+        BROKER_TRANSPORT='redis',
         CELERY_ALWAYS_EAGER=True,
-        CELERY_CACHE_BACKEND="memory",
+        CELERY_CACHE_BACKEND='memory',
         CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-        CELERY_RESULT_BACKEND="cache",
+        CELERY_RESULT_BACKEND='cache',
+        CELERY_TRACK_STARTED=True,
         LOGIN_DISABLED=False,
+        OAUTH2_CACHE_TYPE='simple',
+        OAUTHLIB_INSECURE_TRANSPORT=True,
         SECRET_KEY='test_key',
+        SECURITY_DEPRECATED_PASSWORD_SCHEMES=[],
+        SECURITY_PASSWORD_HASH='plaintext',
+        SECURITY_PASSWORD_SCHEMES=['plaintext'],
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
                                           'sqlite:///test.db'),
+        TESTING=True,
         WTF_CSRF_ENABLED=False,
-        OAUTHLIB_INSECURE_TRANSPORT=True,
-        OAUTH2_CACHE_TYPE='simple',
-        SECURITY_PASSWORD_HASH='plaintext',
-        SECURITY_PASSWORD_SCHEMES=['plaintext'],
-        SECURITY_DEPRECATED_PASSWORD_SCHEMES=[],
     )
     celeryext = FlaskCeleryExt(app)
     celeryext.celery.flask_app = app  # Make sure both apps are the same!
