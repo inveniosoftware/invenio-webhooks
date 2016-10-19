@@ -168,7 +168,7 @@ class CeleryReceiver(Receiver):
 
     def __call__(self, event):
         """Fire a celery task."""
-        process_event.apply_async(task_id=str(event.id), args=[event.id])
+        process_event.apply_async(task_id=str(event.id), args=[str(event.id)])
 
     def status(self, event):
         """Return a tuple with current processing status code and message."""
