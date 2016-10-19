@@ -166,6 +166,12 @@ class CeleryReceiver(Receiver):
     }
     """Mapping of Celery result states to HTTP codes."""
 
+    CELERY_RESULT_INFO_FOR = {
+        states.PENDING,
+        states.STARTED,
+    }
+    """Celery states in which the task's status is reported."""
+
     def __call__(self, event):
         """Fire a celery task."""
         process_event.apply_async(task_id=str(event.id), args=[str(event.id)])
@@ -176,7 +182,7 @@ class CeleryReceiver(Receiver):
         return (
             self.CELERY_STATES_TO_HTTP.get(result.state),
             result.info.get('message')
-            if result.state == states.PENDING and result.info
+            if result.state in self.CELERY_RESULT_INFO_FOR and result.info
             else event.response.get('message')
         )
 
