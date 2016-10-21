@@ -26,9 +26,15 @@ from flask import url_for
 from invenio_db import db
 
 from invenio_webhooks.models import CeleryReceiver, Event, InvalidPayload, \
-    InvalidSignature, ReceiverDoesNotExist
+    InvalidSignature, Receiver, ReceiverDoesNotExist
 from invenio_webhooks.proxies import current_webhooks
 from invenio_webhooks.signatures import get_hmac
+
+
+def test_run_must_be_implemeted():
+    """Test that run raises NotImplementedError if not overriden."""
+    with pytest.raises(NotImplementedError):
+        Receiver('not-implemented').run(None)
 
 
 def test_receiver_registration(app, receiver):
