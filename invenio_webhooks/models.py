@@ -69,7 +69,7 @@ class Receiver(object):
 
     def run(self, event):
         """Implement method accepting the ``Event`` instance."""
-        raise NotImplemented()
+        raise NotImplemented
 
     def status(self, event):
         """Return a tuple with current processing status code and message.
