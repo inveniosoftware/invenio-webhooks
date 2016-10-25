@@ -32,4 +32,5 @@ Invenio module for processing webhook events.
 - Konstantinos Kostis <konstantinos.kostis@cern.ch>
 - Lars Holm Nielsen <lars.holm.nielsen@cern.ch>
 - Leonardo Rossi <leonardo.r@cern.ch>
+- Orestis Melkonian <melkon.or@gmail.com>
 - Tibor Simko <tibor.simko@cern.ch>
