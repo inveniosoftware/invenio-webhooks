@@ -37,6 +37,7 @@ from invenio_db import db
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import validates
 from sqlalchemy.orm.attributes import flag_modified
+from sqlalchemy.types import JSON
 from sqlalchemy_utils import JSONType, Timestamp, UUIDType
 
 from . import signatures
@@ -197,10 +198,9 @@ class CeleryReceiver(Receiver):
 def _json_column(**kwargs):
     """Return JSON column."""
     return db.Column(
-        JSONType().with_variant(
-            postgresql.JSON(none_as_null=True),
-            'postgresql',
-        ),
+        JSON().with_variant(
+            postgresql.JSONB(none_as_null=True), 'postgresql'
+        ).with_variant(JSONType(), 'sqlite'),
         nullable=True,
         **kwargs
     )
