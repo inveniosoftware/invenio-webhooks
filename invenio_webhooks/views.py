@@ -32,6 +32,7 @@ from functools import wraps
 from flask import Blueprint, abort, current_app, jsonify, request, url_for
 from flask.views import MethodView
 from flask_babelex import lazy_gettext as _
+from flask_login import current_user
 from invenio_db import db
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_oauth2server.models import Scope
@@ -119,9 +120,14 @@ class ReceiverEventListResource(MethodView):
     @error_handler
     def post(self, receiver_id=None):
         """Handle POST request."""
+        try:
+            user_id = request.oauth.access_token.user_id
+        except AttributeError:
+            user_id = current_user.get_id()
+
         event = Event.create(
             receiver_id=receiver_id,
-            user_id=request.oauth.access_token.user_id
+            user_id=user_id
         )
         db.session.add(event)
         db.session.commit()
@@ -146,7 +152,12 @@ class ReceiverEventResource(MethodView):
             receiver_id=receiver_id, id=event_id
         ).first_or_404()
 
-        if event.user_id != request.oauth.access_token.user_id:
+        try:
+            user_id = request.oauth.access_token.user_id
+        except AttributeError:
+            user_id = current_user.get_id()
+
+        if event.user_id != int(user_id):
             abort(401)
 
         return event

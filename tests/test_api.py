@@ -22,6 +22,8 @@ from __future__ import absolute_import
 import json
 
 from flask import url_for
+from flask_login import current_user
+from flask_security import url_for_security
 
 from invenio_webhooks.models import Receiver
 from invenio_webhooks.proxies import current_webhooks
@@ -141,6 +143,45 @@ def test_webhook_post(app, tester_id, access_token, receiver):
                 is_json=False,
                 headers=[('Content-Type', 'application/json')],
                 code=400,
+            )
+
+
+def test_webhook_post_no_token(app, tester_id, receiver):
+    ds = app.extensions['security'].datastore
+
+    with app.test_request_context():
+        user = ds.get_user(tester_id)
+        with app.test_client() as client:
+            # Manual login via view
+            response = client.post(
+                url_for_security('login'),
+                data={'email': user.email, 'password': user.password},
+                environ_base={'REMOTE_ADDR': '127.0.0.1'}
+            )
+
+            assert response.status_code == 302
+            assert user.get_id() == current_user.get_id()
+
+            payload = dict(somekey='somevalue')
+            response = make_request(
+                None,
+                client.post,
+                'invenio_webhooks.event_list',
+                urlargs=dict(receiver_id='test-receiver'),
+                data=payload,
+                code=202,
+            )
+
+            make_request(
+                None,
+                client.get,
+                'invenio_webhooks.event_item',
+                urlargs=dict(
+                    receiver_id=response.headers['X-Hub-Event'],
+                    event_id=response.headers['X-Hub-Delivery'],
+                ),
+                data=payload,
+                code=202,
             )
 
 
