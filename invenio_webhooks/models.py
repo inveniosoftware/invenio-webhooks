@@ -130,8 +130,11 @@ class Receiver(object):
         """Extract payload from request."""
         if not self.check_signature():
             raise InvalidSignature('Invalid Signature')
-        if request.content_type == 'application/json':
-            return request.get_json()
+        if request.is_json:
+            # Request.get_json() could be first called with silent=True.
+            if hasattr(request, '_cached_json'):
+                delattr(request, '_cached_json')
+            return request.get_json(silent=False, cache=False)
         elif request.content_type == 'application/x-www-form-urlencoded':
             return dict(request.form)
         raise InvalidPayload(request.content_type)
