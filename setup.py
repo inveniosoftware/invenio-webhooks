@@ -32,7 +32,8 @@ readme = open('README.rst').read()
 history = open('CHANGES.rst').read()
 
 tests_require = [
-    'Flask-CeleryExt>=0.1.0',
+    'Flask-CeleryExt>=0.2.2',
+    'SQLAlchemy-Continuum>=1.2.1',
     'check-manifest>=0.25',
     'coverage>=4.0',
     'isort>=4.2.2',
@@ -45,16 +46,27 @@ tests_require = [
 
 extras_require = {
     'celery': [
-        'celery>=3.0',
+        'celery>=3.1,<4.0',
     ],
     'docs': [
         'Sphinx>=1.4.2',
+    ],
+    'mysql': [
+        'invenio-db[mysql]>=1.0.0b3',
+    ],
+    'postgresql': [
+        'invenio-db[postgresql]>=1.0.0b3',
+    ],
+    'sqlite': [
+        'invenio-db>=1.0.0b3',
     ],
     'tests': tests_require,
 }
 
 extras_require['all'] = []
-for reqs in extras_require.values():
+for name, reqs in extras_require.items():
+    if name in ('mysql', 'postgresql', 'sqlite'):
+        continue
     extras_require['all'].extend(reqs)
 
 setup_requires = [
@@ -66,8 +78,8 @@ install_requires = [
     'Flask-BabelEx>=0.9.2',
     'Flask>=0.11.1',
     'cryptography>=1.3.1',
-    'invenio-db>=1.0.0b1',
-    'invenio-oauth2server>=1.0.0a10',
+    'invenio-accounts>=1.0.0b1',
+    'invenio-oauth2server>=1.0.0a13',
 ]
 
 packages = find_packages()
@@ -101,6 +113,12 @@ setup(
             'invenio_webhooks = invenio_webhooks.views:blueprint',
         ],
         'invenio_base.models': [
+            'invenio_webhooks = invenio_webhooks.models',
+        ],
+        'invenio_db.alembic': [
+            'invenio_webhooks = invenio_webhooks:alembic',
+        ],
+        'invenio_db.models': [
             'invenio_webhooks = invenio_webhooks.models',
         ],
         'invenio_i18n.translations': [

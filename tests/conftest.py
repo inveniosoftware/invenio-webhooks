@@ -42,6 +42,8 @@ from invenio_db import InvenioDB, db
 from invenio_oauth2server import InvenioOAuth2Server
 from invenio_oauth2server.models import Token
 from invenio_oauth2server.views import server_blueprint, settings_blueprint
+from sqlalchemy_utils.functions import create_database, database_exists, \
+    drop_database
 
 from invenio_webhooks import InvenioWebhooks
 from invenio_webhooks.models import Receiver
@@ -88,11 +90,13 @@ def app(request):
     app.register_blueprint(blueprint)
 
     with app.app_context():
+        if not database_exists(str(db.engine.url)):
+            create_database(str(db.engine.url))
         db.create_all()
 
     def teardown():
         with app.app_context():
-            db.drop_all()
+            drop_database(str(db.engine.url))
 
     request.addfinalizer(teardown)
     return app
