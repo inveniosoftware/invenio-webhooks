@@ -105,6 +105,9 @@ setup(
     include_package_data=True,
     platforms='any',
     entry_points={
+        'invenio_base.apps': [
+            'invenio_webhooks = invenio_webhooks:InvenioWebhooks',
+        ],
         'invenio_base.api_apps': [
             'invenio_webhooks = invenio_webhooks:InvenioWebhooks',
         ],
