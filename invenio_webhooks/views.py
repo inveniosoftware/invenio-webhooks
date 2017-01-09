@@ -173,6 +173,16 @@ class ReceiverEventResource(MethodView):
     @require_api_auth()
     @require_oauth_scopes('webhooks:event')
     @error_handler
+    def put(self, receiver_id=None, event_id=None):
+        """Handle PUT request."""
+        event = self._get_event(receiver_id, event_id)
+        event.reprocess()
+        db.session.commit()
+        return make_response(event)
+
+    @require_api_auth()
+    @require_oauth_scopes('webhooks:event')
+    @error_handler
     def delete(self, receiver_id=None, event_id=None):
         """Handle DELETE request."""
         event = self._get_event(receiver_id, event_id)

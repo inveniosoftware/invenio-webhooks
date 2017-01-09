@@ -287,6 +287,18 @@ class Event(db.Model, Timestamp):
             self.response = dict(status=500, message=str(e))
         return self
 
+    def reprocess(self):
+        """Re-process current event."""
+        self.receiver.delete(self)
+        try:
+            self.receiver.run(self)
+        # TODO RESTException
+        except Exception as e:
+            current_app.logger.exception('Could not process event.')
+            self.response_code = 500
+            self.response = dict(status=500, message=str(e))
+        return self
+
     @property
     def status(self):
         """Return a tuple with current processing status code and message."""
