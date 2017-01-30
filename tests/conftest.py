@@ -159,3 +159,39 @@ def receiver(app):
 
     app.extensions['invenio-webhooks'].register('test-receiver', TestReceiver)
     return TestReceiver
+
+
+@pytest.fixture
+def restricted_receiver(app):
+    """Register test receiver with permissions."""
+    class RestrictedReceiver(Receiver):
+        """Permits operations based on boolean flags on event's payload."""
+
+        def __init__(self, *args, **kwargs):
+            super(RestrictedReceiver, self).__init__(*args, **kwargs)
+            self.calls = []
+
+        def run(self, event):
+            event.response = {'status': 202, 'message': 'Accepted.'}
+            event.response_code = 202
+            self.calls.append(event)
+
+        @staticmethod
+        def can_create(user_id, **kwargs):
+            return Receiver.can_create(user_id)
+
+        @staticmethod
+        def can_read(user_id, event, **kwargs):
+            return event.payload.get('read')
+
+        @staticmethod
+        def can_update(user_id, event, **kwargs):
+            return event.payload.get('update')
+
+        @staticmethod
+        def can_delete(user_id, event, **kwargs):
+            return event.payload.get('delete')
+
+    app.extensions['invenio-webhooks'].register('restricted-receiver',
+                                                RestrictedReceiver)
+    return app.extensions['invenio-webhooks'].receivers['restricted-receiver']

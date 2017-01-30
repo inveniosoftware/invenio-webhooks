@@ -77,8 +77,11 @@ setup_requires = [
 install_requires = [
     'Flask-BabelEx>=0.9.3',
     'Flask>=0.11.1',
+    'SQLAlchemy-Utils>=0.32.9',
+    'SQLAlchemy>=1.1.5',
+    'cryptography>=1.3.1',
     'invenio-accounts>=1.0.0b9',
-    'invenio-oauth2server>=1.0.0b4',
+    'invenio-oauth2server>=1.0.0a13',
 ]
 
 packages = find_packages()

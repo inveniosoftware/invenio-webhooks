@@ -40,6 +40,8 @@ from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.types import JSON
 from sqlalchemy_utils import JSONType, Timestamp, UUIDType
 
+from invenio_webhooks.permissions import allow_all, allow_creator
+
 from . import signatures
 from ._compat import delete_cached_json_for
 from .errors import InvalidPayload, InvalidSignature, ReceiverDoesNotExist
@@ -111,6 +113,29 @@ class Receiver(object):
             access_token=access_token,
             _external=True
         )
+
+    #
+    # Permission methods
+    #
+    @staticmethod
+    def can_create(user_id, **kwargs):
+        """Check if given user can create events on this receiver."""
+        return allow_all()
+
+    @staticmethod
+    def can_read(user_id, event, **kwargs):
+        """Check if given user can get status of events on this receiver."""
+        return allow_creator(user_id, event)
+
+    @staticmethod
+    def can_update(user_id, event, **kwargs):
+        """Check if given user can update events on this receiver."""
+        return allow_creator(user_id, event)
+
+    @staticmethod
+    def can_delete(user_id, event, **kwargs):
+        """Check if given user can delete events on this receiver."""
+        return allow_creator(user_id, event)
 
     #
     # Instance methods (override if needed)
@@ -288,7 +313,7 @@ class Event(db.Model, Timestamp):
 
     def reprocess(self):
         """Re-process current event."""
-        self.receiver.delete(self)
+        self.delete()
         try:
             self.receiver.run(self)
         # TODO RESTException
