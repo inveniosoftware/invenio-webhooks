@@ -26,19 +26,20 @@
 
 from __future__ import absolute_import, print_function
 
-import json
 from functools import wraps
 
-from flask import Blueprint, abort, current_app, jsonify, request, url_for
+from flask import Blueprint, abort, jsonify, url_for
 from flask.views import MethodView
 from flask_babelex import lazy_gettext as _
-from flask_login import current_user
 from invenio_db import db
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_oauth2server.models import Scope
 
+from invenio_webhooks.decorators import need_receiver_permission, pass_event, \
+    pass_user_id
+
 from .errors import InvalidPayload, ReceiverDoesNotExist, WebhooksError
-from .models import Event, Receiver
+from .models import Event
 
 blueprint = Blueprint('invenio_webhooks', __name__)
 
@@ -118,13 +119,10 @@ class ReceiverEventListResource(MethodView):
     @require_api_auth()
     @require_oauth_scopes('webhooks:event')
     @error_handler
-    def post(self, receiver_id=None):
+    @pass_user_id
+    @need_receiver_permission('create')
+    def post(self, receiver_id, user_id):
         """Handle POST request."""
-        try:
-            user_id = request.oauth.access_token.user_id
-        except AttributeError:
-            user_id = current_user.get_id()
-
         event = Event.create(
             receiver_id=receiver_id,
             user_id=user_id
@@ -137,7 +135,7 @@ class ReceiverEventListResource(MethodView):
         db.session.commit()
         return make_response(event)
 
-    def options(self, receiver_id=None):
+    def options(self, receiver_id):
         """Handle OPTIONS request."""
         abort(405)
 
@@ -145,37 +143,24 @@ class ReceiverEventListResource(MethodView):
 class ReceiverEventResource(MethodView):
     """Event resource."""
 
-    @staticmethod
-    def _get_event(receiver_id, event_id):
-        """Find event and check access rights."""
-        event = Event.query.filter_by(
-            receiver_id=receiver_id, id=event_id
-        ).first_or_404()
-
-        try:
-            user_id = request.oauth.access_token.user_id
-        except AttributeError:
-            user_id = current_user.get_id()
-
-        if event.user_id != int(user_id):
-            abort(401)
-
-        return event
-
     @require_api_auth()
     @require_oauth_scopes('webhooks:event')
     @error_handler
-    def get(self, receiver_id=None, event_id=None):
+    @pass_user_id
+    @pass_event
+    @need_receiver_permission('read')
+    def get(self, receiver_id, user_id, event):
         """Handle GET request."""
-        event = self._get_event(receiver_id, event_id)
         return make_response(event)
 
     @require_api_auth()
     @require_oauth_scopes('webhooks:event')
     @error_handler
-    def put(self, receiver_id=None, event_id=None):
+    @pass_user_id
+    @pass_event
+    @need_receiver_permission('update')
+    def put(self, receiver_id, user_id, event):
         """Handle PUT request."""
-        event = self._get_event(receiver_id, event_id)
         event.reprocess()
         db.session.commit()
         return make_response(event)
@@ -183,9 +168,11 @@ class ReceiverEventResource(MethodView):
     @require_api_auth()
     @require_oauth_scopes('webhooks:event')
     @error_handler
-    def delete(self, receiver_id=None, event_id=None):
+    @pass_user_id
+    @pass_event
+    @need_receiver_permission('delete')
+    def delete(self, receiver_id, user_id, event):
         """Handle DELETE request."""
-        event = self._get_event(receiver_id, event_id)
         event.delete()
         db.session.commit()
         return make_response(event)
