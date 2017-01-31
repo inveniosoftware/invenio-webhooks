@@ -49,7 +49,7 @@ extras_require = {
         'celery>=3.1,<4.0',
     ],
     'docs': [
-        'Sphinx>=1.4.2',
+        'Sphinx>=1.5.2',
     ],
     'mysql': [
         'invenio-db[mysql]>=1.0.0b3',
@@ -106,6 +106,9 @@ setup(
     include_package_data=True,
     platforms='any',
     entry_points={
+        'invenio_base.apps': [
+            'invenio_webhooks = invenio_webhooks:InvenioWebhooks',
+        ],
         'invenio_base.api_apps': [
             'invenio_webhooks = invenio_webhooks:InvenioWebhooks',
         ],
