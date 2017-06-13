@@ -26,12 +26,14 @@
 
 from __future__ import absolute_import, print_function
 
+from flask_security import current_user
+
 
 def allow_creator(user_id, event):
     """Allow action only to the creator of the event."""
     return event.user_id == int(user_id)
 
 
-def allow_all():
+def allow_users():
     """Allow action to everyone."""
-    return True
+    return not current_user.is_anonymous

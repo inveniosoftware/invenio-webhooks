@@ -62,6 +62,7 @@ def app(request):
         CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
         CELERY_RESULT_BACKEND='cache',
         CELERY_TRACK_STARTED=True,
+        ACCOUNTS_JWT_ENABLE=False,
         LOGIN_DISABLED=False,
         OAUTH2_CACHE_TYPE='simple',
         OAUTHLIB_INSECURE_TRANSPORT=True,
@@ -177,20 +178,11 @@ def restricted_receiver(app):
             self.calls.append(event)
 
         @classmethod
-        def can_create(cls, user_id, **kwargs):
-            return Receiver.can_create(user_id)
-
-        @classmethod
-        def can_read(cls, user_id, event, **kwargs):
-            return event.payload.get('read')
-
-        @classmethod
-        def can_update(cls, user_id, event, **kwargs):
-            return event.payload.get('update')
-
-        @classmethod
-        def can_delete(cls, user_id, event, **kwargs):
-            return event.payload.get('delete')
+        def can(cls, user_id, event, action, **kwargs):
+            if action == 'create':
+                return Receiver.can(user_id, 'create')
+            else:
+                return event.payload.get(action)
 
     app.extensions['invenio-webhooks'].register('restricted-receiver',
                                                 RestrictedReceiver)

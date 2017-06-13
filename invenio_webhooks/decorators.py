@@ -83,10 +83,10 @@ def need_receiver_permission(action_name):
             event = kwargs.get('event')
 
             # Get receiver's permission method for given action
-            can_method = getattr(receiver, 'can_{0}'.format(action_name))
+            can_method = getattr(receiver, 'can')
 
             # Check if user can perform requested action
-            if not can_method(user_id, event=event):
+            if not can_method(user_id, event=event, action=action_name):
                 abort(403)
 
             # Update keyword arguments
