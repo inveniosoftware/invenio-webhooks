@@ -41,7 +41,7 @@ from sqlalchemy.types import JSON
 from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import JSONType, UUIDType
 
-from invenio_webhooks.permissions import allow_all, allow_creator
+from invenio_webhooks.permissions import allow_creator, allow_users
 
 from . import signatures
 from .errors import InvalidPayload, InvalidSignature, ReceiverDoesNotExist
@@ -118,24 +118,13 @@ class Receiver(object):
     # Permission methods
     #
     @classmethod
-    def can_create(cls, user_id, **kwargs):
+    def can(cls, user_id, action, **kwargs):
         """Check if given user can create events on this receiver."""
-        return allow_all()
-
-    @classmethod
-    def can_read(cls, user_id, event, **kwargs):
-        """Check if given user can get status of events on this receiver."""
-        return allow_creator(user_id, event)
-
-    @classmethod
-    def can_update(cls, user_id, event, **kwargs):
-        """Check if given user can update events on this receiver."""
-        return allow_creator(user_id, event)
-
-    @classmethod
-    def can_delete(cls, user_id, event, **kwargs):
-        """Check if given user can delete events on this receiver."""
-        return allow_creator(user_id, event)
+        if action == 'create':
+            return allow_users()
+        elif action in ['read', 'update', 'delete']:
+            return allow_creator(user_id, kwargs['event'])
+        return False
 
     #
     # Instance methods (override if needed)
