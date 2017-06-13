@@ -117,23 +117,23 @@ class Receiver(object):
     #
     # Permission methods
     #
-    @staticmethod
-    def can_create(user_id, **kwargs):
+    @classmethod
+    def can_create(cls, user_id, **kwargs):
         """Check if given user can create events on this receiver."""
         return allow_all()
 
-    @staticmethod
-    def can_read(user_id, event, **kwargs):
+    @classmethod
+    def can_read(cls, user_id, event, **kwargs):
         """Check if given user can get status of events on this receiver."""
         return allow_creator(user_id, event)
 
-    @staticmethod
-    def can_update(user_id, event, **kwargs):
+    @classmethod
+    def can_update(cls, user_id, event, **kwargs):
         """Check if given user can update events on this receiver."""
         return allow_creator(user_id, event)
 
-    @staticmethod
-    def can_delete(user_id, event, **kwargs):
+    @classmethod
+    def can_delete(cls, user_id, event, **kwargs):
         """Check if given user can delete events on this receiver."""
         return allow_creator(user_id, event)
 

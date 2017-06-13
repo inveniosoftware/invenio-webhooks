@@ -176,20 +176,20 @@ def restricted_receiver(app):
             event.response_code = 202
             self.calls.append(event)
 
-        @staticmethod
-        def can_create(user_id, **kwargs):
+        @classmethod
+        def can_create(cls, user_id, **kwargs):
             return Receiver.can_create(user_id)
 
-        @staticmethod
-        def can_read(user_id, event, **kwargs):
+        @classmethod
+        def can_read(cls, user_id, event, **kwargs):
             return event.payload.get('read')
 
-        @staticmethod
-        def can_update(user_id, event, **kwargs):
+        @classmethod
+        def can_update(cls, user_id, event, **kwargs):
             return event.payload.get('update')
 
-        @staticmethod
-        def can_delete(user_id, event, **kwargs):
+        @classmethod
+        def can_delete(cls, user_id, event, **kwargs):
             return event.payload.get('delete')
 
     app.extensions['invenio-webhooks'].register('restricted-receiver',
