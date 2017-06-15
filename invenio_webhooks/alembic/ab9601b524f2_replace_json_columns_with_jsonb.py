@@ -54,38 +54,52 @@ def _json_column():
 def upgrade():
     """Upgrade database."""
     op.alter_column(table_name='webhooks_events', column_name='payload',
-                    nullable=True, type_=_json_column(),
+                    nullable=True, existing_nullable=True,
+                    existing_server_default=None,
+                    type_=_json_column(),
                     existing_type=existing_json_column())
     op.alter_column(table_name='webhooks_events',
                     column_name='payload_headers',
-                    nullable=True, type_=_json_column(),
+                    nullable=True, existing_nullable=True,
+                    existing_server_default=None,
+                    type_=_json_column(),
                     existing_type=existing_json_column())
     op.alter_column(table_name='webhooks_events', column_name='response',
-                    nullable=True, type_=_json_column(),
+                    nullable=True, existing_nullable=True,
+                    type_=_json_column(),
                     existing_type=existing_json_column(),
-                    existing_server_default={'status': 202,
-                                             'message': 'Accepted.'})
+                    existing_server_default=lambda: {'status': 202,
+                                                     'message': 'Accepted.'})
     op.alter_column(table_name='webhooks_events',
                     column_name='response_headers',
-                    nullable=True, type_=_json_column(),
+                    nullable=True, existing_nullable=True,
+                    existing_server_default=None,
+                    type_=_json_column(),
                     existing_type=existing_json_column())
 
 
 def downgrade():
     """Downgrade database."""
     op.alter_column(table_name='webhooks_events', column_name='payload',
-                    nullable=True, type_=existing_json_column(),
+                    nullable=True, existing_nullable=True,
+                    existing_server_default=None,
+                    type_=existing_json_column(),
                     existing_type=_json_column())
     op.alter_column(table_name='webhooks_events',
                     column_name='payload_headers',
-                    nullable=True, type_=existing_json_column(),
+                    nullable=True, existing_nullable=True,
+                    existing_server_default=None,
+                    type_=existing_json_column(),
                     existing_type=_json_column())
     op.alter_column(table_name='webhooks_events', column_name='response',
-                    nullable=True, type_=existing_json_column(),
+                    nullable=True, existing_nullable=True,
+                    type_=existing_json_column(),
                     existing_type=_json_column(),
-                    existing_server_default={'status': 202,
-                                             'message': 'Accepted.'})
+                    existing_server_default=lambda: {'status': 202,
+                                                     'message': 'Accepted.'})
     op.alter_column(table_name='webhooks_events',
                     column_name='response_headers',
-                    nullable=True, type_=existing_json_column(),
+                    nullable=True, existing_nullable=True,
+                    existing_server_default=None,
+                    type_=existing_json_column(),
                     existing_type=_json_column())
