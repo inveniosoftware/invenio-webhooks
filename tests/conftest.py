@@ -61,6 +61,7 @@ def app(request):
         CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
         CELERY_RESULT_BACKEND='cache',
         CELERY_TRACK_STARTED=True,
+        ACCOUNTS_JWT_ENABLE=False,
         LOGIN_DISABLED=False,
         OAUTH2_CACHE_TYPE='simple',
         OAUTHLIB_INSECURE_TRANSPORT=True,
@@ -157,3 +158,30 @@ def receiver(app):
 
     app.extensions['invenio-webhooks'].register('test-receiver', TestReceiver)
     return TestReceiver
+
+
+@pytest.fixture
+def restricted_receiver(app):
+    """Register test receiver with permissions."""
+    class RestrictedReceiver(Receiver):
+        """Permits operations based on boolean flags on event's payload."""
+
+        def __init__(self, *args, **kwargs):
+            super(RestrictedReceiver, self).__init__(*args, **kwargs)
+            self.calls = []
+
+        def run(self, event):
+            event.response = {'status': 202, 'message': 'Accepted.'}
+            event.response_code = 202
+            self.calls.append(event)
+
+        @classmethod
+        def can(cls, user_id, event, action, **kwargs):
+            if action == 'create':
+                return Receiver.can(user_id, 'create')
+            else:
+                return event.payload.get(action)
+
+    app.extensions['invenio-webhooks'].register('restricted-receiver',
+                                                RestrictedReceiver)
+    return app.extensions['invenio-webhooks'].receivers['restricted-receiver']

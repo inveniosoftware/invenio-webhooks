@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2015 CERN.
+# Copyright (C) 2017 CERN.
 #
 # Invenio is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
@@ -22,35 +22,18 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
+"""Useful permission functions."""
 
-[aliases]
-test=pytest
+from __future__ import absolute_import, print_function
 
-[build_sphinx]
-source-dir = docs/
-build-dir = docs/_build
-all_files = 1
+from flask_security import current_user
 
-[bdist_wheel]
-universal = 1
 
-[compile_catalog]
-directory = invenio_webhooks/translations/
+def allow_creator(user_id, event):
+    """Allow action only to the creator of the event."""
+    return event.user_id == int(user_id)
 
-[extract_messages]
-copyright_holder = CERN
-msgid_bugs_address = info@inveniosoftware.org
-mapping-file = babel.ini
-output-file = invenio_webhooks/translations/messages.pot
-add-comments = NOTE
 
-[init_catalog]
-input-file = invenio_webhooks/translations/messages.pot
-output-dir = invenio_webhooks/translations/
-
-[pydocstyle]
-add_ignore = D401
-
-[update_catalog]
-input-file = invenio_webhooks/translations/messages.pot
-output-dir = invenio_webhooks/translations/
+def allow_users():
+    """Allow action to everyone."""
+    return not current_user.is_anonymous

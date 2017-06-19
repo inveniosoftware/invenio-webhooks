@@ -49,7 +49,7 @@ extras_require = {
         'celery>=3.1,<4.0',
     ],
     'docs': [
-        'Sphinx>=1.4.2',
+        'Sphinx>=1.5.2',
     ],
     'mysql': [
         'invenio-db[mysql]>=1.0.0b3',
@@ -77,6 +77,8 @@ setup_requires = [
 install_requires = [
     'Flask-BabelEx>=0.9.2',
     'Flask>=0.11.1',
+    'SQLAlchemy>=1.1.5',
+    'SQLAlchemy-Utils>=0.32.9',
     'cryptography>=1.3.1',
     'invenio-accounts>=1.0.0b1',
     'invenio-oauth2server>=1.0.0a13',
@@ -106,6 +108,9 @@ setup(
     include_package_data=True,
     platforms='any',
     entry_points={
+        'invenio_base.apps': [
+            'invenio_webhooks = invenio_webhooks:InvenioWebhooks',
+        ],
         'invenio_base.api_apps': [
             'invenio_webhooks = invenio_webhooks:InvenioWebhooks',
         ],
