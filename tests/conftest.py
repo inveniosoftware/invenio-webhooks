@@ -62,7 +62,6 @@ def app(request):
         CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
         CELERY_RESULT_BACKEND='cache',
         CELERY_TRACK_STARTED=True,
-        ACCOUNTS_JWT_ENABLE=False,
         LOGIN_DISABLED=False,
         OAUTH2_CACHE_TYPE='simple',
         OAUTHLIB_INSECURE_TRANSPORT=True,
