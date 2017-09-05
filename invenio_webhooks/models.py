@@ -87,6 +87,10 @@ class Receiver(object):
         event.response = {'status': 410, 'message': 'Gone.'}
         event.response_code = 410
 
+    def clean(self, event):
+        """Clean environment."""
+        pass
+
     def get_hook_url(self, access_token):
         """Get URL for webhook.
 
@@ -302,7 +306,7 @@ class Event(db.Model, Timestamp):
 
     def reprocess(self):
         """Re-process current event."""
-        self.delete()
+        self.receiver.clean(self)
         try:
             self.receiver.run(self)
         # TODO RESTException
