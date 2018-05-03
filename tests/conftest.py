@@ -39,7 +39,7 @@ from flask_menu import Menu
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.views import blueprint as accounts_blueprint
 from invenio_db import InvenioDB, db
-from invenio_oauth2server import InvenioOAuth2Server
+from invenio_oauth2server import InvenioOAuth2Server, InvenioOAuth2ServerREST
 from invenio_oauth2server.models import Token
 from invenio_oauth2server.views import server_blueprint, settings_blueprint
 from sqlalchemy_utils.functions import create_database, database_exists, \
@@ -55,6 +55,7 @@ def app(request):
     """Flask application fixture."""
     app = Flask('testapp')
     app.config.update(
+        ACCOUNTS_JWT_ENABLE=False,
         BROKER_TRANSPORT='redis',
         CELERY_ALWAYS_EAGER=True,
         CELERY_CACHE_BACKEND='memory',
@@ -84,6 +85,7 @@ def app(request):
     InvenioAccounts(app)
     app.register_blueprint(accounts_blueprint)
     InvenioOAuth2Server(app)
+    InvenioOAuth2ServerREST(app)
     app.register_blueprint(server_blueprint)
     app.register_blueprint(settings_blueprint)
     InvenioWebhooks(app)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2015 CERN.
+# Copyright (C) 2018 CERN.
 #
 # Invenio is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
@@ -22,35 +22,27 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
+"""Compatibility module for Flask."""
 
-[aliases]
-test=pytest
+from __future__ import absolute_import
 
-[build_sphinx]
-source-dir = docs/
-build-dir = docs/_build
-all_files = 1
+from distutils.version import LooseVersion as V
 
-[bdist_wheel]
-universal = 1
+from pkg_resources import get_distribution
 
-[pydocstyle]
-add_ignore = D401
+_FLASK_CURRENT_VERSION = V(get_distribution('flask').version)
+_FLASK_VERSION_WITH_BUG = V('0.12')
 
-[compile_catalog]
-directory = invenio_webhooks/translations/
 
-[extract_messages]
-copyright_holder = CERN
-msgid_bugs_address = info@inveniosoftware.org
-mapping-file = babel.ini
-output-file = invenio_webhooks/translations/messages.pot
-add-comments = NOTE
+def delete_cached_json_for(request):
+    """Delete `_cached_json` attribute for the given request.
 
-[init_catalog]
-input-file = invenio_webhooks/translations/messages.pot
-output-dir = invenio_webhooks/translations/
+    Bug workaround to delete `_cached_json` attribute when using Flask < 0.12.
+    More details: https://github.com/pallets/flask/issues/2087
 
-[update_catalog]
-input-file = invenio_webhooks/translations/messages.pot
-output-dir = invenio_webhooks/translations/
+    Note that starting from Flask 1.0, the private `_cached_json` attribute
+    has been changed in Flask package, and this code will fail.
+    """
+    if _FLASK_CURRENT_VERSION < _FLASK_VERSION_WITH_BUG:
+        if hasattr(request, '_cached_json'):
+            delattr(request, '_cached_json')

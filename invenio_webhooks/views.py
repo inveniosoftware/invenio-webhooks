@@ -85,7 +85,7 @@ def make_response(event):
 # Default decorators
 #
 def error_handler(f):
-    """Decorator to handle exceptions."""
+    """Return a json payload and appropriate status code on expection."""
     @wraps(f)
     def inner(*args, **kwargs):
         try:
