@@ -25,10 +25,12 @@
 addons:
   postgresql: 9.4
 
+dist: trusty
+
 notifications:
   email: false
 
-sudo: false
+sudo: true
 
 language: python
 

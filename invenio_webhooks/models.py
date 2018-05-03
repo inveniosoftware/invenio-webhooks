@@ -37,10 +37,10 @@ from invenio_db import db
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import validates
 from sqlalchemy.orm.attributes import flag_modified
-from sqlalchemy_utils.models import Timestamp
-from sqlalchemy_utils.types import JSONType, UUIDType
+from sqlalchemy_utils import JSONType, Timestamp, UUIDType
 
 from . import signatures
+from ._compat import delete_cached_json_for
 from .errors import InvalidPayload, InvalidSignature, ReceiverDoesNotExist
 from .proxies import current_webhooks
 
@@ -132,8 +132,7 @@ class Receiver(object):
             raise InvalidSignature('Invalid Signature')
         if request.is_json:
             # Request.get_json() could be first called with silent=True.
-            if hasattr(request, '_cached_json'):
-                delattr(request, '_cached_json')
+            delete_cached_json_for(request)
             return request.get_json(silent=False, cache=False)
         elif request.content_type == 'application/x-www-form-urlencoded':
             return dict(request.form)
