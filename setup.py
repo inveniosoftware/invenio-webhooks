@@ -32,27 +32,28 @@ readme = open('README.rst').read()
 history = open('CHANGES.rst').read()
 
 tests_require = [
-    'Flask-CeleryExt>=0.2.2',
+    'Flask-CeleryExt>=0.3.4',
     'SQLAlchemy-Continuum>=1.2.1',
     'pytest-cache>=1.0',
-    'pytest-invenio>=1.4.0'
+    'pytest-invenio>=1.4.0',
+    'iniconfig>=1.1.1',
 ]
 
 extras_require = {
     'celery': [
-        'celery>=4.3,<5.0',
+        'celery>=5.0',
     ],
     'docs': [
         'Sphinx>=3',
     ],
     'mysql': [
-        'invenio-db[mysql]>=1.0.0b8',
+        'invenio-db[mysql]>=1.0.8',
     ],
     'postgresql': [
-        'invenio-db[postgresql]>=1.0.0b8',
+        'invenio-db[postgresql]>=1.0.8',
     ],
     'sqlite': [
-        'invenio-db>=1.0.0b8',
+        'invenio-db>=1.0.8',
     ],
     'tests': tests_require,
 }
@@ -69,10 +70,10 @@ setup_requires = [
 ]
 
 install_requires = [
-    'Flask-BabelEx>=0.9.3',
-    'Flask>=0.11.1',
-    'invenio-accounts>=1.0.0b9',
-    'invenio-oauth2server>=1.0.0b4',
+    'Flask-BabelEx>=0.9.4',
+    'Flask>=1.0.4',
+    'invenio-accounts>=1.4.1',
+    'invenio-oauth2server>=1.2.0',
 ]
 
 packages = find_packages()

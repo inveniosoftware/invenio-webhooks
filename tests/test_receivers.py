@@ -70,7 +70,7 @@ def test_receiver_registration(app, receiver):
         event = Event.create(receiver_id='test-receiver')
         event.process()
         assert 2 == len(event.receiver.calls)
-        assert dict(somekey=['somevalue']) == event.receiver.calls[1].payload
+        assert dict(somekey='somevalue') == event.receiver.calls[1].payload
 
     # Test invalid post data
     with app.test_request_context(method='POST', data="invaliddata"):
@@ -96,7 +96,7 @@ def test_receiver_registration(app, receiver):
         db.session.commit()
         event.process()
         assert 1 == len(calls)
-        assert dict(somekey=['somevalue']) == calls[0]
+        assert dict(somekey='somevalue') == calls[0]
 
 
 def test_unknown_receiver(app):
