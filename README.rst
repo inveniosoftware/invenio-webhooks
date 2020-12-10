@@ -25,8 +25,8 @@
  Invenio-Webhooks
 ==================
 
-.. image:: https://img.shields.io/travis/inveniosoftware/invenio-webhooks.svg
-        :target: https://travis-ci.org/inveniosoftware/invenio-webhooks
+.. image:: https://github.com/inveniosoftware/invenio-webhooks/workflows/CI/badge.svg
+        :target: https://github.com/inveniosoftware/invenio-webhooks/actions?query=workflow%3ACI
 
 .. image:: https://img.shields.io/coveralls/inveniosoftware/invenio-webhooks.svg
         :target: https://coveralls.io/r/inveniosoftware/invenio-webhooks

@@ -34,22 +34,16 @@ history = open('CHANGES.rst').read()
 tests_require = [
     'Flask-CeleryExt>=0.2.2',
     'SQLAlchemy-Continuum>=1.2.1',
-    'check-manifest>=0.35',
-    'coverage>=4.4.1',
-    'isort>=4.3',
-    'pydocstyle>=2.0.0',
     'pytest-cache>=1.0',
-    'pytest-cov>=2.5.1',
-    'pytest-pep8>=1.0.6',
-    'pytest>=3.3.1',
+    'pytest-invenio>=1.4.0'
 ]
 
 extras_require = {
     'celery': [
-        'celery>=3.1,<4.0',
+        'celery>=4.3,<5.0',
     ],
     'docs': [
-        'Sphinx>=1.5.2',
+        'Sphinx>=3',
     ],
     'mysql': [
         'invenio-db[mysql]>=1.0.0b8',
