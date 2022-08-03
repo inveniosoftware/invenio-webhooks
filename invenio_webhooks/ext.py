@@ -24,8 +24,6 @@
 
 """Invenio module for processing webhook events."""
 
-from __future__ import absolute_import, print_function
-
 import pkg_resources
 
 from . import config
