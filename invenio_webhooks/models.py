@@ -24,8 +24,6 @@
 
 """Models for webhook receivers."""
 
-from __future__ import absolute_import
-
 import re
 import uuid
 

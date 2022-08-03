@@ -24,12 +24,11 @@
 
 """Invenio module for processing webhook events."""
 
-from __future__ import absolute_import, print_function
-
 from .ext import InvenioWebhooks
 from .models import Receiver
 from .proxies import current_webhooks
-from .version import __version__
+
+__version__ = "1.0.0a5.dev20161003"
 
 __all__ = (
     '__version__',
