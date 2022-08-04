@@ -24,8 +24,6 @@
 
 """Webhook errors."""
 
-from __future__ import absolute_import
-
 
 class WebhooksError(Exception):
     """General webhook error."""
