@@ -34,14 +34,14 @@ from flask_breadcrumbs import Breadcrumbs
 from flask_celeryext import FlaskCeleryExt
 from flask_mail import Mail
 from flask_menu import Menu
+from flask_security.utils import hash_password
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.views import blueprint as accounts_blueprint
 from invenio_db import InvenioDB, db
 from invenio_oauth2server import InvenioOAuth2Server, InvenioOAuth2ServerREST
 from invenio_oauth2server.models import Token
 from invenio_oauth2server.views import server_blueprint, settings_blueprint
-from sqlalchemy_utils.functions import create_database, database_exists, \
-    drop_database
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 
 from invenio_webhooks import InvenioWebhooks
 from invenio_webhooks.models import Receiver
@@ -51,25 +51,28 @@ from invenio_webhooks.views import blueprint
 @pytest.fixture
 def app(request):
     """Flask application fixture."""
-    app = Flask('testapp')
+    app = Flask("testapp")
     app.config.update(
         ACCOUNTS_JWT_ENABLE=False,
-        BROKER_TRANSPORT='redis',
+        APP_THEME=[],
+        THEME_ICONS=[],
+        CELERY_BROKER_TRANSPORT="redis",
         CELERY_ALWAYS_EAGER=True,
-        CELERY_CACHE_BACKEND='memory',
+        CELERY_CACHE_BACKEND="memory",
         CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
-        CELERY_RESULT_BACKEND='cache',
-        CELERY_TRACK_STARTED=True,
+        CELERY_RESULT_BACKEND="cache",
+        CELERY_TASK_TRACK_STARTED=True,
         LOGIN_DISABLED=False,
-        OAUTH2_CACHE_TYPE='simple',
+        OAUTH2_CACHE_TYPE="simple",
         OAUTHLIB_INSECURE_TRANSPORT=True,
-        SECRET_KEY='test_key',
+        SECRET_KEY="test_key",
         SECURITY_DEPRECATED_PASSWORD_SCHEMES=[],
-        SECURITY_PASSWORD_HASH='plaintext',
-        SECURITY_PASSWORD_SCHEMES=['plaintext'],
+        SECURITY_PASSWORD_HASH="plaintext",
+        SECURITY_PASSWORD_SCHEMES=["plaintext"],
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'sqlite:///test.db'),
+        SQLALCHEMY_DATABASE_URI=os.getenv(
+            "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
+        ),
         TESTING=True,
         WTF_CSRF_ENABLED=False,
     )
@@ -106,11 +109,13 @@ def app(request):
 def tester_id(app):
     """Fixture that contains the test data for models tests."""
     with app.app_context():
-        datastore = app.extensions['security'].datastore
+        datastore = app.extensions["security"].datastore
         tester = datastore.create_user(
-            email='info@inveniosoftware.org', password='tester',
+            email="info@inveniosoftware.org",
+            password=hash_password("tester"),
+            active=True,
         )
-        db.session.commit()
+        datastore.commit()
         tester_id = tester.id
     return tester_id
 
@@ -120,9 +125,9 @@ def access_token(app, tester_id):
     """Fixture that create an access token."""
     with app.app_context():
         token = Token.create_personal(
-            'test-personal-{0}'.format(tester_id),
+            "test-personal-{0}".format(tester_id),
             tester_id,
-            scopes=['webhooks:event'],
+            scopes=["webhooks:event"],
             is_internal=True,
         ).access_token
         db.session.commit()
@@ -134,9 +139,9 @@ def access_token_no_scope(app, tester_id):
     """Fixture that create an access token without scope."""
     with app.app_context():
         token = Token.create_personal(
-            'test-personal-{0}'.format(tester_id),
+            "test-personal-{0}".format(tester_id),
             tester_id,
-            scopes=[''],
+            scopes=[""],
             is_internal=True,
         ).access_token
         db.session.commit()
@@ -146,8 +151,8 @@ def access_token_no_scope(app, tester_id):
 @pytest.fixture
 def receiver(app):
     """Register test receiver."""
-    class TestReceiver(Receiver):
 
+    class TestReceiver(Receiver):
         def __init__(self, *args, **kwargs):
             super(TestReceiver, self).__init__(*args, **kwargs)
             self.calls = []
@@ -155,5 +160,5 @@ def receiver(app):
         def run(self, event):
             self.calls.append(event)
 
-    app.extensions['invenio-webhooks'].register('test-receiver', TestReceiver)
+    app.extensions["invenio-webhooks"].register("test-receiver", TestReceiver)
     return TestReceiver
