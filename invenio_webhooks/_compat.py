@@ -24,12 +24,11 @@
 
 """Compatibility module for Flask."""
 
-from distutils.version import LooseVersion as V
-
+from packaging.version import Version as V
 from pkg_resources import get_distribution
 
-_FLASK_CURRENT_VERSION = V(get_distribution('flask').version)
-_FLASK_VERSION_WITH_BUG = V('0.12')
+_FLASK_CURRENT_VERSION = V(get_distribution("flask").version)
+_FLASK_VERSION_WITH_BUG = V("0.12")
 
 
 def delete_cached_json_for(request):
@@ -42,5 +41,5 @@ def delete_cached_json_for(request):
     has been changed in Flask package, and this code will fail.
     """
     if _FLASK_CURRENT_VERSION < _FLASK_VERSION_WITH_BUG:
-        if hasattr(request, '_cached_json'):
-            delattr(request, '_cached_json')
+        if hasattr(request, "_cached_json"):
+            delattr(request, "_cached_json")

@@ -31,8 +31,8 @@ from .proxies import current_webhooks
 __version__ = "1.0.0a5.dev20161003"
 
 __all__ = (
-    '__version__',
-    'current_webhooks',
-    'InvenioWebhooks',
-    'Receiver',
+    "__version__",
+    "current_webhooks",
+    "InvenioWebhooks",
+    "Receiver",
 )

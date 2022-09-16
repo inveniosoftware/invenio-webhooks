@@ -12,7 +12,9 @@ on:
   push:
     branches: master
   pull_request:
-    branches: master
+    branches:
+      - master
+      - "**-fixes"      
   schedule:
     # * is a special character in YAML so you have to quote this string
     - cron: "0 3 * * 6"
@@ -30,38 +32,13 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7, 3.8, 3.9]
-        requirements-level: [min, pypi]
-        cache-service: [redis]
-        db-service: [postgresql9, postgresql11, mysql5, mysql8]
-        exclude:
-          - python-version: 3.8
-            requirements-level: min
-
-          - python-version: 3.9
-            requirements-level: min
-
-          - db-service: postgresql11
-            python-version: 3.6
-
-          - db-service: mysql8
-            python-version: 3.6
-        include:
-          - db-service: postgresql9
-            DB_EXTRAS: "postgresql"
-
-          - db-service: postgresql11
-            DB_EXTRAS: "postgresql"
-
-          - db-service: mysql5
-            DB_EXTRAS: "mysql"
-
-          - db-service: mysql8
-            DB_EXTRAS: "mysql"
+        requirements-level: [pypi]
 
     env:
       CACHE: ${{ matrix.cache-service }}
-      DB: ${{ matrix.db-service }}
-      EXTRAS: all,${{ matrix.DB_EXTRAS }}
+      LEVEL: ${{ matrix.requirements-level }}
+      PYTHON: ${{ matrix.python-version }}
+      EXTRAS: tests
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -71,20 +48,23 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Install system packages needed by python packages
+        run: sudo apt install python3-testresources
+
       - name: Generate dependencies
         run: |
-          python -m pip install --upgrade pip setuptools py wheel requirements-builder
-          requirements-builder -e "$EXTRAS" --level=${{ matrix.requirements-level }} setup.py > .${{ matrix.requirements-level }}-${{ matrix.python-version }}-requirements.txt
+          pip install --upgrade pip wheel requirements-builder
+          requirements-builder -e "$EXTRAS" --level=$LEVEL setup.py > .$LEVEL-$PYTHON-requirements.txt
 
       - name: Cache pip
         uses: actions/cache@v2
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('.${{ matrix.requirements-level }}-${{ matrix.python-version }}-requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('.$LEVEL-$PYTHON-requirements.txt') }}
 
       - name: Install dependencies
         run: |
-          pip install -r .${{ matrix.requirements-level }}-${{ matrix.python-version }}-requirements.txt
+          pip install -r .$LEVEL-$PYTHON-requirements.txt -c constraints-$LEVEL.txt
           pip install ".[$EXTRAS]"
           pip freeze
           docker --version

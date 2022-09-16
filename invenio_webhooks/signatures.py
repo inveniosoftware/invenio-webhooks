@@ -35,11 +35,11 @@ def get_hmac(message):
 
     :param message: String to calculate HMAC for.
     """
-    key = current_app.config['WEBHOOKS_SECRET_KEY']
+    key = current_app.config["WEBHOOKS_SECRET_KEY"]
     hmac_value = hmac.new(
-        key.encode('utf-8') if hasattr(key, 'encode') else key,
-        message.encode('utf-8') if hasattr(message, 'encode') else message,
-        sha1
+        key.encode("utf-8") if hasattr(key, "encode") else key,
+        message.encode("utf-8") if hasattr(message, "encode") else message,
+        sha1,
     ).hexdigest()
     return hmac_value
 
@@ -51,8 +51,8 @@ def check_x_hub_signature(signature, message):
     :param message: Request message.
     """
     hmac_value = get_hmac(message)
-    if hmac_value == signature or \
-       (signature.find('=') > -1 and
-            hmac_value == signature[signature.find('=') + 1:]):
+    if hmac_value == signature or (
+        signature.find("=") > -1 and hmac_value == signature[signature.find("=") + 1 :]
+    ):
         return True
     return False

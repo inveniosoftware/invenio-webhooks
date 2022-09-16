@@ -27,6 +27,4 @@
 from flask import current_app
 from werkzeug.local import LocalProxy
 
-current_webhooks = LocalProxy(
-    lambda: current_app.extensions['invenio-webhooks']
-)
+current_webhooks = LocalProxy(lambda: current_app.extensions["invenio-webhooks"])
