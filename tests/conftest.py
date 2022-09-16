@@ -69,6 +69,7 @@ def app(request):
         SECURITY_DEPRECATED_PASSWORD_SCHEMES=[],
         SECURITY_PASSWORD_HASH="plaintext",
         SECURITY_PASSWORD_SCHEMES=["plaintext"],
+        SECURITY_PASSWORD_SINGLE_HASH=False,
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         SQLALCHEMY_DATABASE_URI=os.getenv(
             "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
