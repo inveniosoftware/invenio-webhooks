@@ -54,7 +54,7 @@ class Receiver(object):
     instance.
     """
 
-    signature = ''
+    signature = ""
     """Default signature."""
 
     def __init__(self, receiver_id):
@@ -79,7 +79,7 @@ class Receiver(object):
     def delete(self, event):
         """Mark event as deleted."""
         assert self.receiver_id == event.receiver_id
-        event.response = {'status': 410, 'message': 'Gone.'}
+        event.response = {"status": 410, "message": "Gone."}
         event.response_code = 410
 
     def get_hook_url(self, access_token):
@@ -96,17 +96,19 @@ class Receiver(object):
             )
         """
         # Allow overwriting hook URL in debug mode.
-        if (current_app.debug or current_app.testing) and \
-           current_app.config.get('WEBHOOKS_DEBUG_RECEIVER_URLS', None):
-            url_pattern = current_app.config[
-                'WEBHOOKS_DEBUG_RECEIVER_URLS'].get(self.receiver_id, None)
+        if (current_app.debug or current_app.testing) and current_app.config.get(
+            "WEBHOOKS_DEBUG_RECEIVER_URLS", None
+        ):
+            url_pattern = current_app.config["WEBHOOKS_DEBUG_RECEIVER_URLS"].get(
+                self.receiver_id, None
+            )
             if url_pattern:
                 return url_pattern % dict(token=access_token)
         return url_for(
-            'invenio_webhooks.event_list',
+            "invenio_webhooks.event_list",
             receiver_id=self.receiver_id,
             access_token=access_token,
-            _external=True
+            _external=True,
         )
 
     #
@@ -118,7 +120,7 @@ class Receiver(object):
             return True
         signature_value = request.headers.get(self.signature, None)
         if signature_value:
-            validator = 'check_' + re.sub(r'[-]', '_', self.signature).lower()
+            validator = "check_" + re.sub(r"[-]", "_", self.signature).lower()
             check_signature = getattr(signatures, validator)
             if check_signature(signature_value, request.data):
                 return True
@@ -127,12 +129,12 @@ class Receiver(object):
     def extract_payload(self):
         """Extract payload from request."""
         if not self.check_signature():
-            raise InvalidSignature('Invalid Signature')
+            raise InvalidSignature("Invalid Signature")
         if request.is_json:
             # Request.get_json() could be first called with silent=True.
             delete_cached_json_for(request)
             return request.get_json(silent=False, cache=False)
-        elif request.content_type == 'application/x-www-form-urlencoded':
+        elif request.content_type == "application/x-www-form-urlencoded":
             return dict(request.form)
         raise InvalidPayload(request.content_type)
 
@@ -144,8 +146,8 @@ def process_event(self, event_id):
         event = Event.query.get(event_id)
         event._celery_task = self  # internal binding to a Celery task
         event.receiver.run(event)  # call run directly to avoid circular calls
-        flag_modified(event, 'response')
-        flag_modified(event, 'response_headers')
+        flag_modified(event, "response")
+        flag_modified(event, "response_headers")
         db.session.add(event)
     db.session.commit()
 
@@ -181,9 +183,9 @@ class CeleryReceiver(Receiver):
         result = AsyncResult(str(event.id))
         return (
             self.CELERY_STATES_TO_HTTP.get(result.state),
-            result.info.get('message')
+            result.info.get("message")
             if result.state in self.CELERY_RESULT_INFO_FOR and result.info
-            else event.response.get('message')
+            else event.response.get("message"),
         )
 
     def delete(self, event):
@@ -197,7 +199,7 @@ def _json_column(**kwargs):
     return db.Column(
         JSONType().with_variant(
             postgresql.JSON(none_as_null=True),
-            'postgresql',
+            "postgresql",
         ),
         nullable=True,
         **kwargs
@@ -210,7 +212,7 @@ class Event(db.Model, Timestamp):
     Represents webhook event data which consists of a payload and a user id.
     """
 
-    __tablename__ = 'webhooks_events'
+    __tablename__ = "webhooks_events"
 
     id = db.Column(
         UUIDType,
@@ -235,9 +237,7 @@ class Event(db.Model, Timestamp):
     payload_headers = _json_column()
     """Store payload headers in JSON format."""
 
-    response = _json_column(
-        default=lambda: {'status': 202, 'message': 'Accepted.'}
-    )
+    response = _json_column(default=lambda: {"status": 202, "message": "Accepted."})
     """Store response in JSON format."""
 
     response_headers = _json_column()
@@ -245,7 +245,7 @@ class Event(db.Model, Timestamp):
 
     response_code = db.Column(db.Integer, default=202)
 
-    @validates('receiver_id')
+    @validates("receiver_id")
     def validate_receiver(self, key, value):
         """Validate receiver identifier."""
         if value not in current_webhooks.receivers:
@@ -279,7 +279,7 @@ class Event(db.Model, Timestamp):
             self.receiver(self)
         # TODO RESTException
         except Exception as e:
-            current_app.logger.exception('Could not process event.')
+            current_app.logger.exception("Could not process event.")
             self.response_code = 500
             self.response = dict(status=500, message=str(e))
         return self
@@ -288,9 +288,7 @@ class Event(db.Model, Timestamp):
     def status(self):
         """Return a tuple with current processing status code and message."""
         status = self.receiver.status(self)
-        return status if status else (
-            self.response_code, self.response.get('message')
-        )
+        return status if status else (self.response_code, self.response.get("message"))
 
     def delete(self):
         """Make receiver delete this event."""

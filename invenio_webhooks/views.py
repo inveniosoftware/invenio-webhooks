@@ -38,15 +38,15 @@ from invenio_oauth2server.models import Scope
 from .errors import InvalidPayload, ReceiverDoesNotExist, WebhooksError
 from .models import Event, Receiver
 
-blueprint = Blueprint('invenio_webhooks', __name__)
+blueprint = Blueprint("invenio_webhooks", __name__)
 
 #
 # Required scope
 #
 webhooks_event = Scope(
-    'webhooks:event',
-    group='Notifications',
-    help_text=_('Allow notifications from external service.'),
+    "webhooks:event",
+    group="Notifications",
+    help_text=_("Allow notifications from external service."),
     internal=True,
 )
 
@@ -58,24 +58,34 @@ def add_link_header(response, links):
     :param links: Dictionary of links.
     """
     if links is not None:
-        response.headers.extend({
-            'Link': ', '.join([
-                '<{0}>; rel="{1}"'.format(l, r) for r, l in links.items()])
-        })
+        response.headers.extend(
+            {
+                "Link": ", ".join(
+                    ['<{0}>; rel="{1}"'.format(l, r) for r, l in links.items()]
+                )
+            }
+        )
 
 
 def make_response(event):
     """Make a response from webhook event."""
     code, message = event.status
     response = jsonify(**event.response)
-    response.headers['X-Hub-Event'] = event.receiver_id
-    response.headers['X-Hub-Delivery'] = event.id
+    response.headers["X-Hub-Event"] = event.receiver_id
+    response.headers["X-Hub-Delivery"] = event.id
     if message:
-        response.headers['X-Hub-Info'] = message
-    add_link_header(response, {'self': url_for(
-        '.event_item', receiver_id=event.receiver_id, event_id=event.id,
-        _external=True
-    )})
+        response.headers["X-Hub-Info"] = message
+    add_link_header(
+        response,
+        {
+            "self": url_for(
+                ".event_item",
+                receiver_id=event.receiver_id,
+                event_id=event.id,
+                _external=True,
+            )
+        },
+    )
     return response, code
 
 
@@ -84,26 +94,25 @@ def make_response(event):
 #
 def error_handler(f):
     """Return a json payload and appropriate status code on expection."""
+
     @wraps(f)
     def inner(*args, **kwargs):
         try:
             return f(*args, **kwargs)
         except ReceiverDoesNotExist:
-            return jsonify(
-                status=404,
-                description='Receiver does not exists.'
-            ), 404
+            return jsonify(status=404, description="Receiver does not exists."), 404
         except InvalidPayload as e:
-            return jsonify(
-                status=415,
-                description='Receiver does not support the'
-                            ' content-type "%s".' % e.args[0]
-            ), 415
+            return (
+                jsonify(
+                    status=415,
+                    description="Receiver does not support the"
+                    ' content-type "%s".' % e.args[0],
+                ),
+                415,
+            )
         except WebhooksError:
-            return jsonify(
-                status=500,
-                description='Internal server error'
-            ), 500
+            return jsonify(status=500, description="Internal server error"), 500
+
     return inner
 
 
@@ -114,7 +123,7 @@ class ReceiverEventListResource(MethodView):
     """Receiver event hook."""
 
     @require_api_auth()
-    @require_oauth_scopes('webhooks:event')
+    @require_oauth_scopes("webhooks:event")
     @error_handler
     def post(self, receiver_id=None):
         """Handle POST request."""
@@ -123,10 +132,7 @@ class ReceiverEventListResource(MethodView):
         except AttributeError:
             user_id = current_user.get_id()
 
-        event = Event.create(
-            receiver_id=receiver_id,
-            user_id=user_id
-        )
+        event = Event.create(receiver_id=receiver_id, user_id=user_id)
         db.session.add(event)
         db.session.commit()
 
@@ -161,7 +167,7 @@ class ReceiverEventResource(MethodView):
         return event
 
     @require_api_auth()
-    @require_oauth_scopes('webhooks:event')
+    @require_oauth_scopes("webhooks:event")
     @error_handler
     def get(self, receiver_id=None, event_id=None):
         """Handle GET request."""
@@ -169,7 +175,7 @@ class ReceiverEventResource(MethodView):
         return make_response(event)
 
     @require_api_auth()
-    @require_oauth_scopes('webhooks:event')
+    @require_oauth_scopes("webhooks:event")
     @error_handler
     def delete(self, receiver_id=None, event_id=None):
         """Handle DELETE request."""
@@ -182,14 +188,14 @@ class ReceiverEventResource(MethodView):
 #
 # Register API resources
 #
-event_list = ReceiverEventListResource.as_view('event_list')
-event_item = ReceiverEventResource.as_view('event_item')
+event_list = ReceiverEventListResource.as_view("event_list")
+event_item = ReceiverEventResource.as_view("event_item")
 
 blueprint.add_url_rule(
-    '/hooks/receivers/<string:receiver_id>/events/',
+    "/hooks/receivers/<string:receiver_id>/events/",
     view_func=event_list,
 )
 blueprint.add_url_rule(
-    '/hooks/receivers/<string:receiver_id>/events/<string:event_id>',
+    "/hooks/receivers/<string:receiver_id>/events/<string:event_id>",
     view_func=event_item,
 )
