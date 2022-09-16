@@ -70,7 +70,7 @@ def test_alembic(app):
         assert not ext.alembic.compare_metadata()
 
 
-def test_view(app):
+def test_view(app, receiver):
     """Test view."""
     with app.test_request_context():
         view_url = url_for('invenio_webhooks.event_list',
