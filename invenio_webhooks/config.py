@@ -32,4 +32,4 @@ Ultrahook for testing on development machines:
     }
 """
 
-WEBHOOKS_SECRET_KEY = 'secret_key'
+WEBHOOKS_SECRET_KEY = "secret_key"

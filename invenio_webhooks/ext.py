@@ -63,19 +63,19 @@ class InvenioWebhooks(object):
         if app:
             self.init_app(app, **kwargs)
 
-    def init_app(self, app, entry_point_group='invenio_webhooks.receivers'):
+    def init_app(self, app, entry_point_group="invenio_webhooks.receivers"):
         """Flask application initialization."""
         self.init_config(app)
         state = _WebhooksState(app, entry_point_group=entry_point_group)
-        self._state = app.extensions['invenio-webhooks'] = state
+        self._state = app.extensions["invenio-webhooks"] = state
 
     def init_config(self, app):
         """Initialize configuration."""
         app.config.setdefault(
-            'WEBHOOKS_BASE_TEMPLATE',
-            app.config.get('BASE_TEMPLATE',
-                           'invenio_webhooks/base.html'))
+            "WEBHOOKS_BASE_TEMPLATE",
+            app.config.get("BASE_TEMPLATE", "invenio_webhooks/base.html"),
+        )
 
         for k in dir(config):
-            if k.startswith('WEBHOOKS_'):
+            if k.startswith("WEBHOOKS_"):
                 app.config.setdefault(k, getattr(config, k))
