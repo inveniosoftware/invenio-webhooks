@@ -24,7 +24,7 @@
 
 """Compatibility module for Flask."""
 
-from distutils.version import LooseVersion as V
+from packaging.version import Version as V
 
 from pkg_resources import get_distribution
 
