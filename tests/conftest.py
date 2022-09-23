@@ -31,12 +31,12 @@ import pytest
 from flask import Flask
 from flask_babelex import Babel
 from flask_breadcrumbs import Breadcrumbs
-from flask_celeryext import FlaskCeleryExt
 from flask_mail import Mail
 from flask_menu import Menu
 from flask_security.utils import hash_password
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.views import blueprint as accounts_blueprint
+from invenio_celery import InvenioCelery
 from invenio_db import InvenioDB, db
 from invenio_oauth2server import InvenioOAuth2Server, InvenioOAuth2ServerREST
 from invenio_oauth2server.models import Token
@@ -77,12 +77,11 @@ def app(request):
         TESTING=True,
         WTF_CSRF_ENABLED=False,
     )
-    celeryext = FlaskCeleryExt(app)
-    celeryext.celery.flask_app = app  # Make sure both apps are the same!
     Babel(app)
     Mail(app)
     Menu(app)
     Breadcrumbs(app)
+    InvenioCelery(app)
     InvenioDB(app)
     InvenioAccounts(app)
     app.register_blueprint(accounts_blueprint)
