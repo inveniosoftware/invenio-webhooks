@@ -59,6 +59,7 @@ jobs:
       CACHE: ${{ matrix.cache-service }}
       DB: ${{ matrix.db-service }}
       EXTRAS: tests,${{ matrix.DB_EXTRAS }}
+      LEVEL: ${{ matrix.requirements-level }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -74,7 +75,7 @@ jobs:
       - name: Generate dependencies
         run: |
           pip install --upgrade pip wheel requirements-builder
-          requirements-builder -e "$EXTRAS" --level=${{ matrix.requirements-level }} setup.py > .${{ matrix.requirements-level }}-${{ matrix.python-version }}-requirements.txt
+          requirements-builder -e "$EXTRAS" --level=$LEVEL setup.py > .$LEVEL-${{ matrix.python-version }}-requirements.txt
 
       - name: Cache pip
         uses: actions/cache@v2
@@ -84,7 +85,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r .${{ matrix.requirements-level }}-${{ matrix.python-version }}-requirements.txt -c constraints-${{ matrix.requirements-level }}.txt
+          pip install -r .$LEVEL-${{ matrix.python-version }}-requirements.txt -c constraints-$LEVEL.txt
           pip install ".[$EXTRAS]"
           pip freeze
           docker --version
