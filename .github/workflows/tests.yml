@@ -30,25 +30,10 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7, 3.8, 3.9]
-        requirements-level: [pypi]
+        requirements-level: [min, pypi]
         cache-service: [redis]
         db-service: [postgresql11, postgresql13, mysql5, mysql8]
-        exclude:
-          - python-version: 3.8
-            requirements-level: min
-
-          - python-version: 3.9
-            requirements-level: min
-
-          - db-service: postgresql11
-            python-version: 3.6
-
-          - db-service: mysql8
-            python-version: 3.6
         include:
-          - db-service: postgresql9
-            DB_EXTRAS: "postgresql"
-
           - db-service: postgresql11
             DB_EXTRAS: "postgresql"
 
@@ -88,7 +73,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r .${{ matrix.requirements-level }}-${{ matrix.python-version }}-requirements.txt
-          pip install ".[$EXTRAS]"
+          pip install .[$EXTRAS]
           pip freeze
           docker --version
           docker-compose --version
