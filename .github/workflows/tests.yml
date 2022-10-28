@@ -33,41 +33,20 @@ jobs:
       matrix:
         python-version: [3.7, 3.8, 3.9]
         requirements-level: [pypi]
-        cache-service: [redis]
-        db-service: [postgresql11, postgresql13, mysql5, mysql8]
-        exclude:
-          - python-version: 3.7
-            db-service: postgresql13
-
-          - python-version: 3.7
-            db-service: mysql8
-
-        include:
-          - db-service: postgresql10
-            DB_EXTRAS: "postgresql"
-
-          - db-service: postgresql13
-            DB_EXTRAS: "postgresql"
-
-          - db-service: mysql5
-            DB_EXTRAS: "mysql"
-
-          - db-service: mysql8
-            DB_EXTRAS: "mysql"
 
     env:
       CACHE: ${{ matrix.cache-service }}
-      DB: ${{ matrix.db-service }}
-      EXTRAS: tests,${{ matrix.DB_EXTRAS }}
       LEVEL: ${{ matrix.requirements-level }}
+      PYTHON: ${{ matrix.python-version }}
+      EXTRAS: tests
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python $PYTHON
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: $PYTHON
 
       - name: Install system packages needed by python packages
         run: sudo apt install python3-testresources
@@ -75,17 +54,17 @@ jobs:
       - name: Generate dependencies
         run: |
           pip install --upgrade pip wheel requirements-builder
-          requirements-builder -e "$EXTRAS" --level=$LEVEL setup.py > .$LEVEL-${{ matrix.python-version }}-requirements.txt
+          requirements-builder -e "$EXTRAS" --level=$LEVEL setup.py > .$LEVEL-$PYTHON-requirements.txt
 
       - name: Cache pip
         uses: actions/cache@v2
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('.${{ matrix.requirements-level }}-${{ matrix.python-version }}-requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('.$LEVEL-$PYTHON-requirements.txt') }}
 
       - name: Install dependencies
         run: |
-          pip install -r .$LEVEL-${{ matrix.python-version }}-requirements.txt -c constraints-$LEVEL.txt
+          pip install -r .$LEVEL-$PYTHON-requirements.txt -c constraints-$LEVEL.txt
           pip install ".[$EXTRAS]"
           pip freeze
           docker --version
