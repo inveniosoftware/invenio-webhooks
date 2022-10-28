@@ -30,9 +30,9 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7, 3.8, 3.9]
-        requirements-level: [min, pypi]
+        requirements-level: [pypi]
         cache-service: [redis]
-        db-service: [postgresql9, postgresql11, mysql5, mysql8]
+        db-service: [postgresql11, postgresql13, mysql5, mysql8]
         exclude:
           - python-version: 3.8
             requirements-level: min
