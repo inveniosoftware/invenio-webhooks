@@ -12,7 +12,9 @@ on:
   push:
     branches: master
   pull_request:
-    branches: master
+    branches:
+      - master
+      - "**-fixes"      
   schedule:
     # * is a special character in YAML so you have to quote this string
     - cron: "0 3 * * 6"
@@ -30,11 +32,22 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7, 3.8, 3.9]
-        requirements-level: [min, pypi]
+        requirements-level: [pypi]
         cache-service: [redis]
         db-service: [postgresql11, postgresql13, mysql5, mysql8]
+        search-service: [opensearch1, elasticsearch7]
+        exclude:
+          - python-version: 3.7
+            db-service: postgresql13
+
+          - python-version: 3.7
+            db-service: mysql8
+
         include:
-          - db-service: postgresql11
+          - db-service: postgresql10
+            DB_EXTRAS: "postgresql"
+
+          - db-service: postgresql13
             DB_EXTRAS: "postgresql"
 
           - db-service: mysql5
@@ -43,10 +56,17 @@ jobs:
           - db-service: mysql8
             DB_EXTRAS: "mysql"
 
+          - search-service: opensearch1
+            SEARCH_EXTRAS: "opensearch1"
+
+          - search-service: elasticsearch7
+            SEARCH_EXTRAS: "elasticsearch7"
+
     env:
       CACHE: ${{ matrix.cache-service }}
       DB: ${{ matrix.db-service }}
-      EXTRAS: all,${{ matrix.DB_EXTRAS }}
+      SEARCH: ${{ matrix.search-service }}
+      EXTRAS: tests,${{ matrix.DB_EXTRAS }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -61,7 +81,7 @@ jobs:
 
       - name: Generate dependencies
         run: |
-          python -m pip install --upgrade pip setuptools py wheel requirements-builder
+          pip install --upgrade pip wheel requirements-builder
           requirements-builder -e "$EXTRAS" --level=${{ matrix.requirements-level }} setup.py > .${{ matrix.requirements-level }}-${{ matrix.python-version }}-requirements.txt
 
       - name: Cache pip
@@ -72,8 +92,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r .${{ matrix.requirements-level }}-${{ matrix.python-version }}-requirements.txt
-          pip install .[$EXTRAS]
+          pip install -r .${{ matrix.requirements-level }}-${{ matrix.python-version }}-requirements.txt -c constraints-${{ matrix.requirements-level }}.txt
+          pip install ".[$EXTRAS]"
           pip freeze
           docker --version
           docker-compose --version
