@@ -29,9 +29,9 @@ from functools import wraps
 
 from flask import Blueprint, abort, current_app, jsonify, request, url_for
 from flask.views import MethodView
-from flask_babelex import lazy_gettext as _
 from flask_login import current_user
 from invenio_db import db
+from invenio_i18n import _
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_oauth2server.models import Scope
 

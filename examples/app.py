@@ -34,13 +34,11 @@ Run example development server:
 """
 
 from flask import Flask
-from flask_babelex import Babel
 
 from invenio_webhooks import InvenioWebhooks
 
 # Create Flask application
 app = Flask(__name__)
-Babel(app)
 InvenioWebhooks(app)
 
 if __name__ == "__main__":
