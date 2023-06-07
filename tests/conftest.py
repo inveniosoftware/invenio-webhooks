@@ -29,7 +29,6 @@ import os
 
 import pytest
 from flask import Flask
-from flask_babelex import Babel
 from flask_breadcrumbs import Breadcrumbs
 from flask_mail import Mail
 from flask_menu import Menu
@@ -38,6 +37,7 @@ from invenio_accounts import InvenioAccounts
 from invenio_accounts.views import blueprint as accounts_blueprint
 from invenio_celery import InvenioCelery
 from invenio_db import InvenioDB, db
+from invenio_i18n import InvenioI18N
 from invenio_oauth2server import InvenioOAuth2Server, InvenioOAuth2ServerREST
 from invenio_oauth2server.models import Token
 from invenio_oauth2server.views import server_blueprint, settings_blueprint
@@ -77,7 +77,7 @@ def app(request):
         TESTING=True,
         WTF_CSRF_ENABLED=False,
     )
-    Babel(app)
+    InvenioI18N(app)
     Mail(app)
     Menu(app)
     Breadcrumbs(app)
