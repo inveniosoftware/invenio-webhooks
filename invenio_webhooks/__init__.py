@@ -28,7 +28,7 @@ from .ext import InvenioWebhooks
 from .models import Receiver
 from .proxies import current_webhooks
 
-__version__ = "1.0.0a5.dev20161003"
+__version__ = "1.0.0"
 
 __all__ = (
     "__version__",
