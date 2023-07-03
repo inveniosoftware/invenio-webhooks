@@ -27,6 +27,7 @@ include *.sh
 include *.txt
 include .dockerignore
 include .editorconfig
+include .git-blame-ignore-revs
 include .lgtm
 include .tx/config
 include LICENSE
