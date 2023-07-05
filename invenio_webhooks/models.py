@@ -277,11 +277,9 @@ class Event(db.Model, Timestamp):
         """Process current event."""
         try:
             self.receiver(self)
-        # TODO RESTException
         except Exception as e:
             current_app.logger.exception("Could not process event.")
-            self.response_code = 500
-            self.response = dict(status=500, message=str(e))
+            raise
         return self
 
     @property
