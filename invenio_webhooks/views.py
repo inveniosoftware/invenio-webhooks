@@ -136,9 +136,13 @@ class ReceiverEventListResource(MethodView):
         db.session.add(event)
         db.session.commit()
 
-        # db.session.begin(subtransactions=True)
-        event.process()
-        db.session.commit()
+        try:
+            event.process()
+        except Exception:
+            db.session.rollback()
+            event.response_code = 500
+            event.response = {"status": 500, "message": "Internal Server Error"}
+            db.session.commit()
         return make_response(event)
 
     def options(self, receiver_id=None):
