@@ -24,6 +24,10 @@
 Changes
 =======
 
+Version 1.0.1 (release 2023-07-12)
+
+- add event error handling
+
 Version 1.0.0 (release 2023-07-03)
 
 - v1.0.0 release
