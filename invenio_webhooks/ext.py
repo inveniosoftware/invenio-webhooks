@@ -2,6 +2,7 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2015, 2016 CERN.
+# Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
@@ -24,7 +25,7 @@
 
 """Invenio module for processing webhook events."""
 
-import pkg_resources
+from invenio_base.utils import entry_points
 
 from . import config
 
@@ -51,7 +52,7 @@ class _WebhooksState(object):
 
     def load_entry_point_group(self, entry_point_group):
         """Load actions from an entry point group."""
-        for ep in pkg_resources.iter_entry_points(group=entry_point_group):
+        for ep in entry_points(group=entry_point_group):
             self.register(ep.name, ep.load())
 
 

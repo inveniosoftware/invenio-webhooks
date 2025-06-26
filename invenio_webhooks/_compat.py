@@ -2,6 +2,7 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2018 CERN.
+# Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
@@ -24,10 +25,11 @@
 
 """Compatibility module for Flask."""
 
-from packaging.version import Version as V
-from pkg_resources import get_distribution
+from importlib.metadata import version
 
-_FLASK_CURRENT_VERSION = V(get_distribution("flask").version)
+from packaging.version import Version as V
+
+_FLASK_CURRENT_VERSION = V(version("flask"))
 _FLASK_VERSION_WITH_BUG = V("0.12")
 
 
