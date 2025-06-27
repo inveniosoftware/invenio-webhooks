@@ -2,6 +2,7 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2015, 2016 CERN.
+# Copyright (C) 2025 Graz University of Technology.
 #
 # Invenio is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
@@ -29,12 +30,11 @@ import os
 
 import pytest
 from flask import Flask
-from flask_breadcrumbs import Breadcrumbs
 from flask_mail import Mail
 from flask_menu import Menu
 from flask_security.utils import hash_password
 from invenio_accounts import InvenioAccounts
-from invenio_accounts.views import blueprint as accounts_blueprint
+from invenio_accounts.views.settings import create_settings_blueprint
 from invenio_celery import InvenioCelery
 from invenio_db import InvenioDB, db
 from invenio_i18n import InvenioI18N
@@ -80,11 +80,10 @@ def app(request):
     InvenioI18N(app)
     Mail(app)
     Menu(app)
-    Breadcrumbs(app)
     InvenioCelery(app)
     InvenioDB(app)
     InvenioAccounts(app)
-    app.register_blueprint(accounts_blueprint)
+    app.register_blueprint(create_settings_blueprint(app))
     InvenioOAuth2Server(app)
     InvenioOAuth2ServerREST(app)
     app.register_blueprint(server_blueprint)
@@ -93,13 +92,15 @@ def app(request):
     app.register_blueprint(blueprint)
 
     with app.app_context():
-        if not database_exists(str(db.engine.url)):
-            create_database(str(db.engine.url))
+        if not database_exists(
+            str(db.engine.url.render_as_string(hide_password=False))
+        ):
+            create_database(str(db.engine.url.render_as_string(hide_password=False)))
         db.create_all()
 
     def teardown():
         with app.app_context():
-            drop_database(str(db.engine.url))
+            drop_database(str(db.engine.url.render_as_string(hide_password=False)))
 
     request.addfinalizer(teardown)
     return app
