@@ -183,9 +183,11 @@ class CeleryReceiver(Receiver):
         result = AsyncResult(str(event.id))
         return (
             self.CELERY_STATES_TO_HTTP.get(result.state),
-            result.info.get("message")
-            if result.state in self.CELERY_RESULT_INFO_FOR and result.info
-            else event.response.get("message"),
+            (
+                result.info.get("message")
+                if result.state in self.CELERY_RESULT_INFO_FOR and result.info
+                else event.response.get("message")
+            ),
         )
 
     def delete(self, event):
