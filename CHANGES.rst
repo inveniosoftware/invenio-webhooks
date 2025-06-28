@@ -1,6 +1,7 @@
 ..
     This file is part of Invenio.
     Copyright (C) 2015, 2016 CERN.
+    Copyright (C) 2025 Graz University of Technology.
 
     Invenio is free software; you can redistribute it
     and/or modify it under the terms of the GNU General Public License as
@@ -23,6 +24,15 @@
 
 Changes
 =======
+
+Version 1.1.0 (release 2025-07-01)
+
+- fix: setuptools require underscores instead of dashes
+- setup: change to reusable workflows
+- fix: pkg_resources DeprecationWarning
+- i18n:push translations
+- i18n: add transifex workflows
+- i18n: fix transifex config
 
 Version 1.0.1 (release 2023-07-12)
 
