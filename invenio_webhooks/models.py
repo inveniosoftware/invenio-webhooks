@@ -2,6 +2,7 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2014, 2015, 2016 CERN.
+# Copyright (C) 2026 Graz University of Technology.
 #
 # Invenio is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
@@ -35,7 +36,7 @@ from invenio_db import db
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import validates
 from sqlalchemy.orm.attributes import flag_modified
-from sqlalchemy_utils import JSONType, Timestamp, UUIDType
+from sqlalchemy_utils import JSONType, UUIDType
 
 from . import signatures
 from ._compat import delete_cached_json_for
@@ -208,7 +209,7 @@ def _json_column(**kwargs):
     )
 
 
-class Event(db.Model, Timestamp):
+class Event(db.Model, db.Timestamp):
     """Incoming webhook event data.
 
     Represents webhook event data which consists of a payload and a user id.
