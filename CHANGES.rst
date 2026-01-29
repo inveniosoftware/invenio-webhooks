@@ -25,6 +25,11 @@
 Changes
 =======
 
+Version v2.0.0 (released 2026-01-29)
+
+- chore(setup): bump dependencies
+- fix(chore): DeprecationWarning stdlib
+
 Version v1.1.1 (released 2026-01-29)
 
 - chore(setup): pin dependencies
