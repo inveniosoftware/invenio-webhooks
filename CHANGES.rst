@@ -1,7 +1,7 @@
 ..
     This file is part of Invenio.
     Copyright (C) 2015, 2016 CERN.
-    Copyright (C) 2025 Graz University of Technology.
+    Copyright (C) 2025-2026 Graz University of Technology.
 
     Invenio is free software; you can redistribute it
     and/or modify it under the terms of the GNU General Public License as
@@ -24,6 +24,10 @@
 
 Changes
 =======
+
+Version v1.1.1 (released 2026-01-29)
+
+- chore(setup): pin dependencies
 
 Version 1.1.0 (release 2025-07-01)
 

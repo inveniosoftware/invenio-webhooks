@@ -2,7 +2,7 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2015 CERN.
-# Copyright (C) 2025 Graz University of Technology.
+# Copyright (C) 2025-2026 Graz University of Technology.
 #
 # Invenio is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
@@ -29,7 +29,7 @@ from .ext import InvenioWebhooks
 from .models import Receiver
 from .proxies import current_webhooks
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
 __all__ = (
     "__version__",
