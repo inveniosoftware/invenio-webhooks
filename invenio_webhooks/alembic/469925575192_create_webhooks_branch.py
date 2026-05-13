@@ -1,6 +1,7 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2016 CERN.
+# Copyright (C) 2026 CESNET z.s.p.o.
 #
 # Invenio is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
@@ -28,9 +29,14 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "469925575192"
-down_revision = "12a88921ada2"
+down_revision = None
 branch_labels = ("invenio_webhooks",)
-depends_on = "dbdbc1b19cf2"
+depends_on = [
+    # invenipo-db
+    "dbdbc1b19cf2",
+    # invenio_oauth2server/alembic/12a88921ada2_create_oauth2server_tables.py
+    "12a88921ada2",
+]
 
 
 def upgrade():
