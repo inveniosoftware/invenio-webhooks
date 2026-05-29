@@ -25,6 +25,12 @@
 Changes
 =======
 
+Version v3.0.0 (released 2026-05-29)
+
+- chore(setup): bump dependencies
+- chore(tests): add tests for alembic
+- fix: fixing the migration dependency to invenio-db package
+
 Version v2.0.0 (released 2026-01-29)
 
 - chore(setup): bump dependencies
