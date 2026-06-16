@@ -29,7 +29,7 @@ from .ext import InvenioWebhooks
 from .models import Receiver
 from .proxies import current_webhooks
 
-__version__ = "3.0.0"
+__version__ = "4.0.0"
 
 __all__ = (
     "__version__",
