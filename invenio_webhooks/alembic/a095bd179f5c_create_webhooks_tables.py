@@ -46,7 +46,7 @@ def upgrade():
                 postgresql.JSON(none_as_null=True),
                 "postgresql",
             ),
-            **kwargs
+            **kwargs,
         )
 
     op.create_table(

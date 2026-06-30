@@ -205,7 +205,7 @@ def _json_column(**kwargs):
             "postgresql",
         ),
         nullable=True,
-        **kwargs
+        **kwargs,
     )
 
 
