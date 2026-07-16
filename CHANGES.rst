@@ -2,6 +2,7 @@
     This file is part of Invenio.
     Copyright (C) 2015, 2016 CERN.
     Copyright (C) 2025-2026 Graz University of Technology.
+    Copyright (C) 2026 TU Wien.
 
     Invenio is free software; you can redistribute it
     and/or modify it under the terms of the GNU General Public License as
@@ -24,6 +25,12 @@
 
 Changes
 =======
+
+
+Version v4.0.1 (released 2026-07-16)
+
+- chore(setup): migrate from setuptools to hatchling
+- chore(cleanup): remove outdated and unnecessary files
 
 Version v4.0.0 (released 2026-06-16)
 
