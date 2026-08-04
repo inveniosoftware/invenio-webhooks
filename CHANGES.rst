@@ -26,6 +26,9 @@
 Changes
 =======
 
+Version v4.0.2 (released 2026-08-04)
+
+- fix(i18n): include ``*.mo`` files in distribution
 
 Version v4.0.1 (released 2026-07-16)
 
