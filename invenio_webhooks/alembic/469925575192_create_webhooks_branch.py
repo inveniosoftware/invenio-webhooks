@@ -4,9 +4,6 @@
 
 """Create webhooks branch."""
 
-import sqlalchemy as sa
-from alembic import op
-
 # revision identifiers, used by Alembic.
 revision = "469925575192"
 down_revision = None
@@ -21,9 +18,7 @@ depends_on = [
 
 def upgrade():
     """Upgrade database."""
-    pass
 
 
 def downgrade():
     """Downgrade database."""
-    pass

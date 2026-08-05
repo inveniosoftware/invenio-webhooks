@@ -4,12 +4,6 @@
 
 """Sphinx configuration."""
 
-from __future__ import print_function
-
-import os
-
-import sphinx.environment
-
 from invenio_webhooks import __version__
 
 # -- General configuration ------------------------------------------------

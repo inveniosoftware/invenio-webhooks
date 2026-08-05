@@ -20,6 +20,7 @@ def delete_cached_json_for(request):
     Note that starting from Flask 1.0, the private `_cached_json` attribute
     has been changed in Flask package, and this code will fail.
     """
-    if _FLASK_CURRENT_VERSION < _FLASK_VERSION_WITH_BUG:
-        if hasattr(request, "_cached_json"):
-            delattr(request, "_cached_json")
+    if (_FLASK_CURRENT_VERSION < _FLASK_VERSION_WITH_BUG) and hasattr(
+        request, "_cached_json"
+    ):
+        delattr(request, "_cached_json")

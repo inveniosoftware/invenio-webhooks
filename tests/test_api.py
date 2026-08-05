@@ -42,10 +42,10 @@ def make_request(
         headers = [("content-type", "application/json")] if is_json else []
 
     if data is not None:
-        request_args = dict(
-            data=json.dumps(data) if is_json else data,
-            headers=headers,
-        )
+        request_args = {
+            "data": json.dumps(data) if is_json else data,
+            "headers": headers,
+        }
     else:
         request_args = {}
 
@@ -58,49 +58,47 @@ def make_request(
 
 
 def test_405_methods(app, tester_id, access_token):
-    with app.test_request_context():
-        with app.test_client() as client:
-            methods = [
-                client.get,
-                client.put,
-                client.delete,
-                client.head,
-                client.options,
-                client.patch,
-            ]
+    with app.test_request_context(), app.test_client() as client:
+        methods = [
+            client.get,
+            client.put,
+            client.delete,
+            client.head,
+            client.options,
+            client.patch,
+        ]
 
-            for client_func in methods:
-                make_request(
-                    access_token,
-                    client_func,
-                    "invenio_webhooks.event_list",
-                    urlargs=dict(receiver_id="test-receiver"),
-                    code=405,
-                )
+        for client_func in methods:
+            make_request(
+                access_token,
+                client_func,
+                "invenio_webhooks.event_list",
+                urlargs={"receiver_id": "test-receiver"},
+                code=405,
+            )
 
 
 def test_webhook_post_unregistered(app, tester_id, access_token):
-    with app.test_request_context():
-        with app.test_client() as client:
-            make_request(
-                access_token,
-                client.post,
-                "invenio_webhooks.event_list",
-                urlargs=dict(receiver_id="test-receiver"),
-                code=404,
-            )
+    with app.test_request_context(), app.test_client() as client:
+        make_request(
+            access_token,
+            client.post,
+            "invenio_webhooks.event_list",
+            urlargs={"receiver_id": "test-receiver"},
+            code=404,
+        )
 
 
 def test_webhook_post(app, tester_id, access_token, receiver):
     with app.test_request_context():
         receiver = current_webhooks.receivers["test-receiver"]
         with app.test_client() as client:
-            payload = dict(somekey="somevalue")
+            payload = {"somekey": "somevalue"}
             make_request(
                 access_token,
                 client.post,
                 "invenio_webhooks.event_list",
-                urlargs=dict(receiver_id="test-receiver"),
+                urlargs={"receiver_id": "test-receiver"},
                 data=payload,
                 code=202,
             )
@@ -112,12 +110,12 @@ def test_webhook_post(app, tester_id, access_token, receiver):
             # Test invalid payload
             import pickle
 
-            payload = dict(somekey="somevalue")
+            payload = {"somekey": "somevalue"}
             make_request(
                 access_token,
                 client.post,
                 "invenio_webhooks.event_list",
-                urlargs=dict(receiver_id="test-receiver"),
+                urlargs={"receiver_id": "test-receiver"},
                 data=pickle.dumps(payload),
                 is_json=False,
                 headers=[("Content-Type", "application/python-pickle")],
@@ -129,7 +127,7 @@ def test_webhook_post(app, tester_id, access_token, receiver):
                 access_token,
                 client.post,
                 "invenio_webhooks.event_list",
-                urlargs=dict(receiver_id="test-receiver"),
+                urlargs={"receiver_id": "test-receiver"},
                 data=pickle.dumps(payload),
                 is_json=False,
                 headers=[("Content-Type", "application/json")],
@@ -153,12 +151,12 @@ def test_webhook_post_no_token(app, tester_id, receiver):
             assert response.status_code == 302
             assert user.get_id() == current_user.get_id()
 
-            payload = dict(somekey="somevalue")
+            payload = {"somekey": "somevalue"}
             response = make_request(
                 None,
                 client.post,
                 "invenio_webhooks.event_list",
-                urlargs=dict(receiver_id="test-receiver"),
+                urlargs={"receiver_id": "test-receiver"},
                 data=payload,
                 code=202,
             )
@@ -167,35 +165,34 @@ def test_webhook_post_no_token(app, tester_id, receiver):
                 None,
                 client.get,
                 "invenio_webhooks.event_item",
-                urlargs=dict(
-                    receiver_id=response.headers["X-Hub-Event"],
-                    event_id=response.headers["X-Hub-Delivery"],
-                ),
+                urlargs={
+                    "receiver_id": response.headers["X-Hub-Event"],
+                    "event_id": response.headers["X-Hub-Delivery"],
+                },
                 data=payload,
                 code=202,
             )
 
 
 def test_405_methods_no_scope(app, tester_id, access_token_no_scope):
-    with app.test_request_context():
-        with app.test_client() as client:
-            methods = [
-                client.get,
-                client.put,
-                client.delete,
-                client.head,
-                client.options,
-                client.patch,
-            ]
+    with app.test_request_context(), app.test_client() as client:
+        methods = [
+            client.get,
+            client.put,
+            client.delete,
+            client.head,
+            client.options,
+            client.patch,
+        ]
 
-            for client_func in methods:
-                make_request(
-                    access_token_no_scope,
-                    client_func,
-                    "invenio_webhooks.event_list",
-                    urlargs=dict(receiver_id="test-receiver"),
-                    code=405,
-                )
+        for client_func in methods:
+            make_request(
+                access_token_no_scope,
+                client_func,
+                "invenio_webhooks.event_list",
+                urlargs={"receiver_id": "test-receiver"},
+                code=405,
+            )
 
 
 def test_webhook_post_no_scope(app, tester_id, access_token_no_scope):
@@ -207,12 +204,12 @@ def test_webhook_post_no_scope(app, tester_id, access_token_no_scope):
         current_webhooks.register("test-receiver-no-scope", TestReceiverNoScope)
 
         with app.test_client() as client:
-            payload = dict(somekey="somevalue")
+            payload = {"somekey": "somevalue"}
             make_request(
                 access_token_no_scope,
                 client.post,
                 "invenio_webhooks.event_list",
-                urlargs=dict(receiver_id="test-receiver-no-scope"),
+                urlargs={"receiver_id": "test-receiver-no-scope"},
                 data=payload,
                 code=403,
             )
@@ -220,14 +217,14 @@ def test_webhook_post_no_scope(app, tester_id, access_token_no_scope):
 
 def test_event_api(app, tester_id, access_token, receiver):
     with app.test_request_context():
-        receiver = current_webhooks.receivers["test-receiver"]
+        current_webhooks.receivers["test-receiver"]
         with app.test_client() as client:
-            payload = dict(somekey="somevalue")
+            payload = {"somekey": "somevalue"}
             response = make_request(
                 access_token,
                 client.post,
                 "invenio_webhooks.event_list",
-                urlargs=dict(receiver_id="test-receiver"),
+                urlargs={"receiver_id": "test-receiver"},
                 data=payload,
                 code=202,
             )
@@ -237,10 +234,10 @@ def test_event_api(app, tester_id, access_token, receiver):
                 access_token,
                 client.head,
                 "invenio_webhooks.event_item",
-                urlargs=dict(
-                    receiver_id=response.headers["X-Hub-Event"],
-                    event_id=response.headers["X-Hub-Delivery"],
-                ),
+                urlargs={
+                    "receiver_id": response.headers["X-Hub-Event"],
+                    "event_id": response.headers["X-Hub-Delivery"],
+                },
                 data=payload,
                 code=202,
             )
@@ -248,10 +245,10 @@ def test_event_api(app, tester_id, access_token, receiver):
                 access_token,
                 client.get,
                 "invenio_webhooks.event_item",
-                urlargs=dict(
-                    receiver_id=response.headers["X-Hub-Event"],
-                    event_id=response.headers["X-Hub-Delivery"],
-                ),
+                urlargs={
+                    "receiver_id": response.headers["X-Hub-Event"],
+                    "event_id": response.headers["X-Hub-Delivery"],
+                },
                 data=payload,
                 code=202,
             )
@@ -261,10 +258,10 @@ def test_event_api(app, tester_id, access_token, receiver):
                 access_token,
                 client.delete,
                 "invenio_webhooks.event_item",
-                urlargs=dict(
-                    receiver_id=response.headers["X-Hub-Event"],
-                    event_id=response.headers["X-Hub-Delivery"],
-                ),
+                urlargs={
+                    "receiver_id": response.headers["X-Hub-Event"],
+                    "event_id": response.headers["X-Hub-Delivery"],
+                },
                 data=payload,
             )
 
@@ -273,10 +270,10 @@ def test_event_api(app, tester_id, access_token, receiver):
                 access_token,
                 client.get,
                 "invenio_webhooks.event_item",
-                urlargs=dict(
-                    receiver_id=response.headers["X-Hub-Event"],
-                    event_id=response.headers["X-Hub-Delivery"],
-                ),
+                urlargs={
+                    "receiver_id": response.headers["X-Hub-Event"],
+                    "event_id": response.headers["X-Hub-Delivery"],
+                },
                 data=payload,
                 code=410,
             )
