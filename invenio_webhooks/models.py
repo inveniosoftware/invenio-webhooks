@@ -6,6 +6,7 @@
 
 import re
 import uuid
+from typing import ClassVar
 
 from celery import shared_task, states
 from celery.result import AsyncResult
@@ -26,7 +27,7 @@ from .proxies import current_webhooks
 #
 # Models
 #
-class Receiver(object):
+class Receiver:
     """Base class for a webhook receiver.
 
     A receiver is responsible for receiving and extracting a payload from a
@@ -54,7 +55,6 @@ class Receiver(object):
 
         Return ``None`` if the backend does not support states.
         """
-        pass
 
     def delete(self, event):
         """Mark event as deleted."""
@@ -83,7 +83,7 @@ class Receiver(object):
                 self.receiver_id, None
             )
             if url_pattern:
-                return url_pattern % dict(token=access_token)
+                return url_pattern % {"token": access_token}
         return url_for(
             "invenio_webhooks.event_list",
             receiver_id=self.receiver_id,
@@ -139,7 +139,7 @@ class CeleryReceiver(Receiver):
     it synchronously during the request.
     """
 
-    CELERY_STATES_TO_HTTP = {
+    CELERY_STATES_TO_HTTP: ClassVar = {
         states.PENDING: 202,
         states.STARTED: 202,
         states.RETRY: 202,
@@ -148,7 +148,7 @@ class CeleryReceiver(Receiver):
     }
     """Mapping of Celery result states to HTTP codes."""
 
-    CELERY_RESULT_INFO_FOR = {
+    CELERY_RESULT_INFO_FOR: ClassVar = {
         states.PENDING,
         states.STARTED,
     }
@@ -172,7 +172,7 @@ class CeleryReceiver(Receiver):
 
     def delete(self, event):
         """Abort running task if it exists."""
-        super(CeleryReceiver, self).delete(event)
+        super().delete(event)
         AsyncResult(event.id).revoke(terminate=True)
 
 
@@ -259,7 +259,7 @@ class Event(db.Model, db.Timestamp):
         """Process current event."""
         try:
             self.receiver(self)
-        except Exception as e:
+        except Exception:
             current_app.logger.exception("Could not process event.")
             raise
         return self

@@ -3,10 +3,9 @@
 
 """Invenio module for processing webhook events."""
 
-import json
 from functools import wraps
 
-from flask import Blueprint, abort, current_app, jsonify, request, url_for
+from flask import Blueprint, abort, jsonify, request, url_for
 from flask.views import MethodView
 from flask_login import current_user
 from invenio_db import db
@@ -15,7 +14,7 @@ from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_oauth2server.models import Scope
 
 from .errors import InvalidPayload, ReceiverDoesNotExist, WebhooksError
-from .models import Event, Receiver
+from .models import Event
 
 blueprint = Blueprint("invenio_webhooks", __name__)
 
@@ -38,11 +37,7 @@ def add_link_header(response, links):
     """
     if links is not None:
         response.headers.extend(
-            {
-                "Link": ", ".join(
-                    ['<{0}>; rel="{1}"'.format(l, r) for r, l in links.items()]
-                )
-            }
+            {"Link": ", ".join([f'<{l}>; rel="{r}"' for r, l in links.items()])}
         )
 
 
@@ -85,7 +80,7 @@ def error_handler(f):
                 jsonify(
                     status=415,
                     description="Receiver does not support the"
-                    ' content-type "%s".' % e.args[0],
+                    f' content-type "{e.args[0]}".',
                 ),
                 415,
             )

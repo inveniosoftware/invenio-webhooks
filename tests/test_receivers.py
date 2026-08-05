@@ -44,7 +44,7 @@ def test_receiver_registration(app, receiver):
         current_webhooks.register("test-receiver", receiver)
 
     # JSON payload parsing
-    payload = json.dumps(dict(somekey="somevalue"))
+    payload = json.dumps({"somekey": "somevalue"})
     headers = [("Content-Type", "application/json")]
     with app.test_request_context(headers=headers, data=payload):
         event = Event.create(receiver_id="test-receiver")
@@ -54,17 +54,19 @@ def test_receiver_registration(app, receiver):
         assert event.receiver.calls[0].user_id is None
 
     # Form encoded values payload parsing
-    payload = dict(somekey="somevalue")
+    payload = {"somekey": "somevalue"}
     with app.test_request_context(method="POST", data=payload):
         event = Event.create(receiver_id="test-receiver")
         event.process()
         assert 2 == len(event.receiver.calls)
-        assert dict(somekey="somevalue") == event.receiver.calls[1].payload
+        assert {"somekey": "somevalue"} == event.receiver.calls[1].payload
 
     # Test invalid post data
-    with app.test_request_context(method="POST", data="invaliddata"):
-        with pytest.raises(InvalidPayload):
-            event = Event.create(receiver_id="test-receiver")
+    with (
+        app.test_request_context(method="POST", data="invaliddata"),
+        pytest.raises(InvalidPayload),
+    ):
+        event = Event.create(receiver_id="test-receiver")
 
     calls = []
 
@@ -76,21 +78,20 @@ def test_receiver_registration(app, receiver):
     app.extensions["invenio-webhooks"].register("celery-receiver", TestCeleryReceiver)
 
     # Form encoded values payload parsing
-    payload = dict(somekey="somevalue")
+    payload = {"somekey": "somevalue"}
     with app.test_request_context(method="POST", data=payload):
         event = Event.create(receiver_id="celery-receiver")
         db.session.add(event)
         db.session.commit()
         event.process()
         assert 1 == len(calls)
-        assert dict(somekey="somevalue") == calls[0]
+        assert {"somekey": "somevalue"} == calls[0]
 
 
 def test_unknown_receiver(app):
     """Raise when receiver does not exist."""
-    with app.app_context():
-        with pytest.raises(ReceiverDoesNotExist):
-            Event.create(receiver_id="unknown")
+    with app.app_context(), pytest.raises(ReceiverDoesNotExist):
+        Event.create(receiver_id="unknown")
 
 
 def test_hookurl(app, receiver):
@@ -124,7 +125,7 @@ def test_signature_checking(app, receiver):
         current_webhooks.register("test-receiver-sign", TestReceiverSign)
 
     # check correct signature
-    payload = json.dumps(dict(somekey="somevalue"))
+    payload = json.dumps({"somekey": "somevalue"})
     with app.app_context():
         headers = [
             ("Content-Type", "application/json"),
@@ -152,9 +153,11 @@ def test_signature_checking(app, receiver):
             ("Content-Type", "application/json"),
             ("X-Hub-Signature", get_hmac("somevalue")),
         ]
-    with app.test_request_context(headers=headers, data=payload):
-        with pytest.raises(InvalidSignature):
-            Event.create(receiver_id="test-receiver-sign")
+    with (
+        app.test_request_context(headers=headers, data=payload),
+        pytest.raises(InvalidSignature),
+    ):
+        Event.create(receiver_id="test-receiver-sign")
 
 
 def test_event_deletion(app, receiver):

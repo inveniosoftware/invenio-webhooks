@@ -30,8 +30,8 @@ def check_x_hub_signature(signature, message):
     :param message: Request message.
     """
     hmac_value = get_hmac(message)
-    if hmac_value == signature or (
-        signature.find("=") > -1 and hmac_value == signature[signature.find("=") + 1 :]
-    ):
-        return True
-    return False
+    return bool(
+        hmac_value == signature
+        or signature.find("=") > -1
+        and hmac_value == signature[signature.find("=") + 1 :]
+    )

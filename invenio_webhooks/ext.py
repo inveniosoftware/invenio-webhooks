@@ -9,7 +9,7 @@ from invenio_base.utils import entry_points
 from . import config
 
 
-class _WebhooksState(object):
+class _WebhooksState:
     """Webhooks state storing registered receivers."""
 
     def __init__(self, app, entry_point_group=None):
@@ -35,7 +35,7 @@ class _WebhooksState(object):
             self.register(ep.name, ep.load())
 
 
-class InvenioWebhooks(object):
+class InvenioWebhooks:
     """Invenio-Webhooks extension."""
 
     def __init__(self, app=None, **kwargs):

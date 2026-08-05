@@ -104,7 +104,7 @@ def access_token(app, tester_id):
     """Fixture that create an access token."""
     with app.app_context():
         token = Token.create_personal(
-            "test-personal-{0}".format(tester_id),
+            f"test-personal-{tester_id}",
             tester_id,
             scopes=["webhooks:event"],
             is_internal=True,
@@ -118,7 +118,7 @@ def access_token_no_scope(app, tester_id):
     """Fixture that create an access token without scope."""
     with app.app_context():
         token = Token.create_personal(
-            "test-personal-{0}".format(tester_id),
+            f"test-personal-{tester_id}",
             tester_id,
             scopes=[""],
             is_internal=True,
@@ -133,7 +133,7 @@ def receiver(app):
 
     class TestReceiver(Receiver):
         def __init__(self, *args, **kwargs):
-            super(TestReceiver, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
             self.calls = []
 
         def run(self, event):
